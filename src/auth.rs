@@ -6,7 +6,45 @@ use serde::Deserialize;
 
 mod oauth;
 
-mod client_flow {}
+mod client_flow {
+  use std::collections::HashMap;
+
+  use serde::Deserialize;
+
+  use crate::Result;
+  use super::Token;
+
+  #[derive(Deserialize)]
+  struct LimitedTokenResponse {
+    access_token: String,
+    token_type: String,
+    scope: String,
+    expires_in: u64,
+  }
+
+  impl From<LimitedTokenResponse> for Token {
+    fn from(response: LimitedTokenResponse) -> Self {
+      let mut token = Token::new(response.access_token, response.token_type, response.scope, response.expires_in, "".to_string());
+      token.set_auto_renew(false);
+      token
+    }
+  }
+
+  impl super::Auth {
+    pub fn client_login(&self) -> Result<Token> {
+      let client = self.client()?;
+
+      let mut params = HashMap::new();
+      params.insert("grant_type", "client_credentials");
+
+      let res = client
+        .post("https://auth.tidal.com/v1/oauth2/token")
+        .form(&params).send()?;
+
+      Ok(res.json::<LimitedTokenResponse>()?.into())
+    } 
+  }
+}
 mod user_flow {
   use std::collections::HashMap;
   use crate::Result;
@@ -21,7 +59,7 @@ mod user_flow {
   impl super::Auth {
     pub fn user_login_init(&self) -> Result<UserFlowInfo> {
       let redirect_uri = self.redirect_uri.clone().ok_or(AuthError::MissingRedirectUri)?;
-      let scopes = ["user.read".to_string()];
+      let scopes = ["user.read".to_string()]; // TODO: make this configurable
       
       let (pkce_challenge, pkce_verifier) = oauth::pkce::new_random_sha256();
       let auth_url = format!(
@@ -179,6 +217,10 @@ impl Token {
   }}
   pub fn expires_at(&self) -> u64 {
     self.received_at + self.expires_in
+  }
+  pub fn set_auto_renew(&mut self, auto_renew: bool) -> &mut Self {
+    self.auto_renew = auto_renew;
+    self
   }
 }
 impl Debug for Token {
