@@ -1,9 +1,12 @@
+#[macro_use]
+extern crate dotenv_codegen;
+
 use tidal_rs::auth::Auth;
 
 fn main() {
     let auth = Auth::new(
-        "ClientID".to_owned(),
-        "ClientSecret".to_owned(),
+        dotenv!("ClientID").to_owned(),
+        dotenv!("ClientSecret").to_owned(),    
         Some("https://example.com/".to_owned())
     );
 
