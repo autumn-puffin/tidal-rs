@@ -144,7 +144,7 @@ mod device_flow {
 }
 
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct TokenResponse {
   access_token: String,
   token_type: String,
@@ -152,7 +152,11 @@ pub struct TokenResponse {
   expires_in: u64,
   refresh_token: String,
 }
-#[derive(Debug)]
+impl Debug for TokenResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TokenResponse").field("access_token", &"[Redacted]").field("token_type", &self.token_type).field("scope", &self.scope).field("expires_in", &self.expires_in).field("refresh_token", &"[Redacted]").finish()
+    }
+}
 pub struct Token {
   access_token: String,
   token_type: String,
@@ -175,6 +179,11 @@ impl Token {
   }}
   pub fn expires_at(&self) -> u64 {
     self.received_at + self.expires_in
+  }
+}
+impl Debug for Token {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+      f.debug_struct("Token").field("access_token", &"[Redacted]").field("token_type", &self.token_type).field("scope", &self.scope).field("expires_in", &self.expires_in).field("refresh_token", &"[Redacted]").field("auto_renew", &self.auto_renew).field("received_at", &self.received_at).finish()
   }
 }
 impl From<TokenResponse> for Token {
