@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate dotenv_codegen;
 
-use tidal_rs::auth::Auth;
+use tidal_rs::auth::{Auth, DeviceFlow};
 
 fn main() {
     let mut auth = Auth::new(
