@@ -13,6 +13,7 @@ fn main() {
     let response = auth.device_login_init().unwrap();
     println!("Please Go To {:?}\n", response.verification_uri_complete);
 
-    let token = auth.device_login_finalize(&response).unwrap();
-    println!("{:?}", token);
+    auth.device_login_finalize(&response).unwrap();
+    let creds = auth.get_credentials().unwrap();
+    println!("{:?}", creds);
 }
