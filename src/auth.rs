@@ -17,16 +17,13 @@ mod client_flow {
   #[derive(Deserialize)]
   struct LimitedTokenResponse {
     access_token: String,
-    token_type: String,
     scope: String,
     expires_in: u64,
   }
 
   impl From<LimitedTokenResponse> for Token {
     fn from(response: LimitedTokenResponse) -> Self {
-      let mut token = Token::new(response.access_token, response.token_type, response.scope, response.expires_in, "".to_string());
-      token.set_auto_renew(false);
-      token
+      Token::new(response.access_token, response.scope, response.expires_in, None, None)
     }
   }
 
@@ -185,65 +182,64 @@ mod device_flow {
 #[derive(Deserialize)]
 pub struct TokenResponse {
   access_token: String,
-  token_type: String,
+  user_id: String,
   scope: String,
   expires_in: u64,
   refresh_token: String,
 }
 impl Debug for TokenResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TokenResponse").field("access_token", &"[Redacted]").field("token_type", &self.token_type).field("scope", &self.scope).field("expires_in", &self.expires_in).field("refresh_token", &"[Redacted]").finish()
+        f.debug_struct("TokenResponse").field("access_token", &"[Redacted]").field("user_id", &self.user_id).field("scope", &self.scope).field("expires_in", &self.expires_in).field("refresh_token", &"[Redacted]").finish()
     }
 }
 pub struct Token {
   access_token: String,
-  token_type: String,
   scope: String,
   expires_in: u64,
-  refresh_token: String,
+  refresh_token: Option<String>,
+  user_id: Option<String>,
 
-  auto_renew: bool,
   received_at: u64,
 }
 impl Token {
-  pub fn new(access_token: String, token_type: String, scope: String, expires_in: u64, refresh_token: String) -> Self { Self {
+  pub fn new(access_token: String, scope: String, expires_in: u64, refresh_token: Option<String>, user_id: Option<String>) -> Self { Self {
     access_token,
-    token_type,
+    user_id,
     scope,
     expires_in,
     refresh_token,
-    auto_renew: true,
     received_at: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs(),
   }}
   pub fn expires_at(&self) -> u64 {
     self.received_at + self.expires_in
   }
-  pub fn set_auto_renew(&mut self, auto_renew: bool) -> &mut Self {
-    self.auto_renew = auto_renew;
-    self
-  }
 }
 impl Debug for Token {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-      f.debug_struct("Token").field("access_token", &"[Redacted]").field("token_type", &self.token_type).field("scope", &self.scope).field("expires_in", &self.expires_in).field("refresh_token", &"[Redacted]").field("auto_renew", &self.auto_renew).field("received_at", &self.received_at).finish()
+      f.debug_struct("Token").field("access_token", &"[Redacted]").field("scope", &self.scope).field("expires_in", &self.expires_in).field("refresh_token", &"[Redacted]").field("received_at", &self.received_at).finish()
   }
 }
 impl From<TokenResponse> for Token {
   fn from(response: TokenResponse) -> Self {
-    Self::new(response.access_token, response.token_type, response.scope, response.expires_in, response.refresh_token)
+    Self::new(response.access_token, response.scope, response.expires_in, Some(response.refresh_token), Some(response.user_id))
   }
 }
 
 pub struct Auth {
   client_id: String,
   client_secret: String,
+  /// Authorisation Configuration
   redirect_uri: Option<String>,
+  /// Credentials for the current session
+  token: Option<Token>,
+  
 }
 impl Auth {
   pub fn new(client_id: String, client_secret: String, redirect_uri: Option<String>) -> Self { Self {
     client_id,
     client_secret,
     redirect_uri,
+    token: None,
   }}
   
   pub fn client(&self) -> Result<Client> {
