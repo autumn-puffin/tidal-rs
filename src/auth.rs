@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{collections::HashMap, fmt::Debug};
 use crate::{error::ApiErrorResponse, Result};
 use base64::prelude::*;
 use reqwest::{blocking::Client, header::HeaderMap};
@@ -12,7 +12,7 @@ mod client_flow {
   use serde::Deserialize;
 
   use crate::Result;
-  use super::Token;
+  use super::Credentials;
 
   #[derive(Deserialize)]
   struct LimitedTokenResponse {
@@ -21,14 +21,14 @@ mod client_flow {
     expires_in: u64,
   }
 
-  impl From<LimitedTokenResponse> for Token {
+  impl From<LimitedTokenResponse> for Credentials {
     fn from(response: LimitedTokenResponse) -> Self {
-      Token::new(response.access_token, response.scope, response.expires_in, None, None)
+      Credentials::new(response.access_token, response.scope, response.expires_in, None, None)
     }
   }
 
   impl super::Auth {
-    pub fn client_login(&self) -> Result<Token> {
+    pub fn client_login(&mut self) -> Result<()> {
       let client = self.client()?;
 
       let mut params = HashMap::new();
@@ -38,14 +38,15 @@ mod client_flow {
         .post("https://auth.tidal.com/v1/oauth2/token")
         .form(&params).send()?;
 
-      Ok(res.json::<LimitedTokenResponse>()?.into())
+      self.credentials = Some(res.json::<LimitedTokenResponse>()?.into());
+      Ok(())
     } 
   }
 }
 mod user_flow {
   use std::collections::HashMap;
   use crate::Result;
-  use super::{oauth, AuthError, Token, TokenResponse};
+  use super::{oauth, AuthError, TokenResponse};
 
   #[derive(Debug)]
   pub struct UserFlowInfo {
@@ -74,7 +75,7 @@ mod user_flow {
       })
     }
     
-    pub fn user_login_finalize(&self, code: String, info: UserFlowInfo) -> Result<Token> {
+    pub fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {
       let redirect_uri = self.redirect_uri.clone().ok_or(AuthError::MissingRedirectUri)?;
 
       let client = self.client()?;
@@ -91,7 +92,8 @@ mod user_flow {
         .post("https://auth.tidal.com/v1/oauth2/token")
         .form(&params).send()?;
 
-      Ok(res.json::<TokenResponse>()?.into())
+      self.credentials = Some(res.json::<TokenResponse>()?.into());
+      Ok(())
 
     }
   }
@@ -99,7 +101,7 @@ mod user_flow {
 mod device_flow {
   use std::collections::HashMap;
   use crate::{error::ApiErrorResponse, Error, Result};
-  use super::{AuthError, Token, TokenResponse};
+  use super::{AuthError, TokenResponse};
   use serde::Deserialize;
 
   #[derive(Debug, Deserialize)]
@@ -127,7 +129,7 @@ mod device_flow {
 
       Ok(res.json()?)
     }
-    pub fn try_device_login_finalize(&self, response: &DeviceFlowResponse) -> Result<Token> {
+    pub fn try_device_login_finalize(&mut self, response: &DeviceFlowResponse) -> Result<()> {
       let client = self.client()?;
 
       let mut params = HashMap::new();
@@ -147,7 +149,8 @@ mod device_flow {
       
 
       if res.status().is_success() {
-        Ok(res.json::<TokenResponse>()?.into())
+        self.credentials = Some(res.json::<TokenResponse>()?.into());
+        Ok(())
       } else {
         let err = res.json::<ApiErrorResponse>()?;
         match err.error.as_str() {
@@ -158,21 +161,18 @@ mod device_flow {
         }
       }
     }
-    pub fn device_login_finalize(&self, response: &DeviceFlowResponse) -> Result<Token> {
+    pub fn device_login_finalize(&mut self, response: &DeviceFlowResponse) -> Result<()> {
       let interval = response.interval;
       let max_retries = response.expires_in / interval;
 
       let mut i: u64 = 0;
-      while i < max_retries {
-        let res = self.try_device_login_finalize(response);
-        match res {
-          Ok(token) => return Ok(token),
-          Err(Error::AuthError(AuthError::AuthorizationPending)) => i += 1,
-          Err(e) => return Err(e),
-        }
-
-        std::thread::sleep(std::time::Duration::from_secs(interval));
-      }
+      while i < max_retries { match self.try_device_login_finalize(response) {
+        Err(Error::AuthError(AuthError::AuthorizationPending)) => {
+            i += 1;
+          std::thread::sleep(std::time::Duration::from_secs(interval));
+        },
+        res => return res,
+      }}
       Err(AuthError::MaxRetriesReached)?
     }
   }
@@ -192,7 +192,7 @@ impl Debug for TokenResponse {
         f.debug_struct("TokenResponse").field("access_token", &"[Redacted]").field("user_id", &self.user_id).field("scope", &self.scope).field("expires_in", &self.expires_in).field("refresh_token", &"[Redacted]").finish()
     }
 }
-pub struct Token {
+pub struct Credentials {
   access_token: String,
   scope: String,
   expires_in: u64,
@@ -201,7 +201,7 @@ pub struct Token {
 
   received_at: u64,
 }
-impl Token {
+impl Credentials {
   pub fn new(access_token: String, scope: String, expires_in: u64, refresh_token: Option<String>, user_id: Option<String>) -> Self { Self {
     access_token,
     user_id,
@@ -214,12 +214,12 @@ impl Token {
     self.received_at + self.expires_in
   }
 }
-impl Debug for Token {
+impl Debug for Credentials {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-      f.debug_struct("Token").field("access_token", &"[Redacted]").field("scope", &self.scope).field("expires_in", &self.expires_in).field("refresh_token", &"[Redacted]").field("received_at", &self.received_at).finish()
+      f.debug_struct("Credentials").field("access_token", &"[Redacted]").field("scope", &self.scope).field("expires_in", &self.expires_in).field("refresh_token", &"[Redacted]").field("received_at", &self.received_at).finish()
   }
 }
-impl From<TokenResponse> for Token {
+impl From<TokenResponse> for Credentials {
   fn from(response: TokenResponse) -> Self {
     Self::new(response.access_token, response.scope, response.expires_in, Some(response.refresh_token), Some(response.user_id))
   }
@@ -231,7 +231,7 @@ pub struct Auth {
   /// Authorisation Configuration
   redirect_uri: Option<String>,
   /// Credentials for the current session
-  token: Option<Token>,
+  credentials: Option<Credentials>,
   
 }
 impl Auth {
@@ -239,7 +239,7 @@ impl Auth {
     client_id,
     client_secret,
     redirect_uri,
-    token: None,
+    credentials: None,
   }}
   
   pub fn client(&self) -> Result<Client> {
@@ -249,6 +249,35 @@ impl Auth {
 
     Client::builder().default_headers(headers).build().map_err(Into::into)
   } 
+
+  pub fn refresh_creds(&mut self) -> Result<()> {
+    let client = self.client()?;
+    let creds = self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?;
+    
+    if creds.refresh_token.is_some() {
+      let mut params = HashMap::new();
+      params.insert("grant_type", "refresh_token");
+      params.insert("refresh_token", creds.refresh_token.as_ref().unwrap());
+
+      let res = client
+        .post("https://auth.tidal.com/v1/oauth2/token")
+        .form(&params).send()?;
+
+      self.credentials = Some(res.json::<TokenResponse>()?.into());
+      Ok(())
+    } else {
+      self.client_login()
+    }
+  }
+
+  pub fn get_credentials(&mut self) -> Result<&Credentials> {
+    let expire_time = self.credentials.as_ref().ok_or(AuthError::Unauthenticated)?.expires_at();
+    let cur_time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+    if expire_time >= cur_time {
+      self.refresh_creds()?;
+    }
+    Ok(self.credentials.as_ref().unwrap())
+  }
 }
 
 #[derive(Debug)]
@@ -258,7 +287,8 @@ pub enum AuthError {
   ApiError(ApiErrorResponse),
   AuthorizationPending,
   MissingRedirectUri,
-MaxRetriesReached,
+  MaxRetriesReached,
+  Unauthenticated,
 }
 impl From<reqwest::header::InvalidHeaderValue> for AuthError {
   fn from(err: reqwest::header::InvalidHeaderValue) -> Self {
