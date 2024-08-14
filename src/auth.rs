@@ -182,7 +182,7 @@ mod device_flow {
 #[derive(Deserialize)]
 pub struct TokenResponse {
   access_token: String,
-  user_id: String,
+  user_id: u64,
   scope: String,
   expires_in: u64,
   refresh_token: String,
@@ -197,12 +197,12 @@ pub struct Credentials {
   scope: String,
   expires_in: u64,
   refresh_token: Option<String>,
-  user_id: Option<String>,
+  user_id: Option<u64>,
 
   received_at: u64,
 }
 impl Credentials {
-  pub fn new(access_token: String, scope: String, expires_in: u64, refresh_token: Option<String>, user_id: Option<String>) -> Self { Self {
+  pub fn new(access_token: String, scope: String, expires_in: u64, refresh_token: Option<String>, user_id: Option<u64>) -> Self { Self {
     access_token,
     user_id,
     scope,
@@ -263,7 +263,12 @@ impl Auth {
         .post("https://auth.tidal.com/v1/oauth2/token")
         .form(&params).send()?;
 
-      self.credentials = Some(res.json::<TokenResponse>()?.into());
+      if res.status().is_success() {
+        self.credentials = Some(res.json::<TokenResponse>()?.into());
+      } else {
+        let err = res.json::<ApiErrorResponse>()?;
+        Err(AuthError::ApiError(err))?
+      }
       Ok(())
     } else {
       self.client_login()
@@ -273,7 +278,7 @@ impl Auth {
   pub fn get_credentials(&mut self) -> Result<&Credentials> {
     let expire_time = self.credentials.as_ref().ok_or(AuthError::Unauthenticated)?.expires_at();
     let cur_time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
-    if expire_time >= cur_time {
+    if expire_time <= cur_time {
       self.refresh_creds()?;
     }
     Ok(self.credentials.as_ref().unwrap())
