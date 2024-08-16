@@ -35,7 +35,7 @@ impl UserFlow for super::Auth {
     let (pkce_challenge, pkce_verifier) = oauth::pkce::new_random_sha256();
     let auth_url = format!(
       "https://auth.tidal.com/v1/oauth2/authorize?response_type=code&client_id={}&redirect_uri={}&scope={}&code_challenge_method=S256&code_challenge={}", 
-      &self.client_id, 
+      self.client_credentials.id(), 
       &redirect_uri, 
       scopes.join("+"), 
       pkce_challenge.as_string()
@@ -56,7 +56,7 @@ impl UserFlow for super::Auth {
     
     let mut params = HashMap::new();
     params.insert("grant_type", "authorization_code");
-    params.insert("client_id", &self.client_id);
+    params.insert("client_id", self.client_credentials.id());
     params.insert("code", &code);
     params.insert("redirect_uri", &redirect_uri);
     params.insert("code_verifier", &verifier);
@@ -82,7 +82,7 @@ impl DeviceFlow for super::Auth {
 
     let mut params = HashMap::new();
     params.insert("scope", "r_usr+w_usr+w_sub");
-    params.insert("client_id", &self.client_id);
+    params.insert("client_id", &self.client_credentials.id());
 
     let res = client
       .post("https://auth.tidal.com/v1/oauth2/device_authorization")
@@ -96,7 +96,7 @@ impl DeviceFlow for super::Auth {
     let mut params = HashMap::new();
     params.insert("scope", "r_usr+w_usr+w_sub");
     params.insert("grant_type", "urn:ietf:params:oauth:grant-type:device_code");
-    params.insert("client_id", &self.client_id);
+    params.insert("client_id", &self.client_credentials.id());
     params.insert("device_code", &response.device_code);
     
     
@@ -105,7 +105,7 @@ impl DeviceFlow for super::Auth {
       .form(&[
         ("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
         ("device_code", &response.device_code),
-        ("client_id", &self.client_id),
+        ("client_id", &self.client_credentials.id()),
       ]).send()?;
     
 

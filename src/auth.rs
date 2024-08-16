@@ -1,5 +1,5 @@
-use std::{collections::HashMap, fmt::Debug};
-use crate::{error::ApiErrorResponse, Result};
+use std::{collections::HashMap, fmt::Debug, rc::Rc};
+use crate::{client::ClientCreds, error::ApiErrorResponse, Result};
 use base64::prelude::*;
 use reqwest::{blocking::Client, header::HeaderMap};
 use serde::Deserialize;
@@ -56,8 +56,7 @@ impl From<TokenResponse> for Credentials {
 }
 
 pub struct Auth {
-  client_id: String,
-  client_secret: String,
+  client_credentials: Rc<ClientCreds>,
   /// Authorisation Configuration
   redirect_uri: Option<String>,
   /// Credentials for the current session
@@ -65,16 +64,16 @@ pub struct Auth {
   
 }
 impl Auth {
-  pub fn new(client_id: String, client_secret: String, redirect_uri: Option<String>) -> Self { Self {
-    client_id,
-    client_secret,
+  pub fn new(client_credentials: ClientCreds, redirect_uri: Option<String>) -> Self { Self {
+    client_credentials: Rc::new(client_credentials),
     redirect_uri,
     credentials: None,
   }}
   
   pub fn client(&self) -> Result<Client> {
+    let client_creds = &self.client_credentials;
     let mut headers = HeaderMap::new();
-    let header_auth = format!("Basic {}", BASE64_STANDARD.encode(format!("{}:{}", self.client_id, self.client_secret))); 
+    let header_auth = format!("Basic {}", BASE64_STANDARD.encode(format!("{}:{}", client_creds.id(), client_creds.secret()))); 
     headers.insert("Authorization", header_auth.parse()?); // TODO: use better error 
 
     Client::builder().default_headers(headers).build().map_err(Into::into)
