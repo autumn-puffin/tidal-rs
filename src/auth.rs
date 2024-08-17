@@ -64,7 +64,7 @@ impl Auth {
         .form(&params).send()?;
 
       if res.status().is_success() {
-        self.credentials = Some(res.json::<TokenResponse>()?.into());
+        self.credentials = Some(Credentials::new(&self.client_credentials, res.json::<TokenResponse>()?));
       } else {
         let err = res.json::<ApiErrorResponse>()?;
         Err(AuthError::ApiError(err))?

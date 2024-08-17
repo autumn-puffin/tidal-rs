@@ -18,7 +18,7 @@ impl ClientFlow for super::Auth {
       .post("https://auth.tidal.com/v1/oauth2/token")
       .form(&params).send()?;
 
-    self.credentials = Some(res.json::<TokenResponse>()?.into());
+    self.credentials = Some(Credentials::new(&self.client_credentials, res.json::<TokenResponse>()?));
     Ok(())
   } 
 }
@@ -65,7 +65,7 @@ impl UserFlow for super::Auth {
       .post("https://auth.tidal.com/v1/oauth2/token")
       .form(&params).send()?;
 
-    self.credentials = Some(res.json::<TokenResponse>()?.into());
+    self.credentials = Some(Credentials::new(&self.client_credentials, res.json::<TokenResponse>()?));
     Ok(())
 
   }
@@ -110,7 +110,7 @@ impl DeviceFlow for super::Auth {
     
 
     if res.status().is_success() {
-      self.credentials = Some(res.json::<TokenResponse>()?.into());
+      self.credentials = Some(Credentials::new(&self.client_credentials, res.json::<TokenResponse>()?));
       Ok(())
     } else {
       let err = res.json::<ApiErrorResponse>()?;

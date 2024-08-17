@@ -1,7 +1,12 @@
-use super::TokenResponse;
-use std::{fmt::Debug, ops::Deref};
+use crate::client::ClientCreds;
 
+use super::TokenResponse;
+use std::{fmt::Debug, ops::Deref, rc::Rc};
+
+#[derive(Debug)]
 pub struct Credentials {
+  client_credentials: Rc<ClientCreds>,
+
   access_token: Token,
   scope: String,
   expires_in: u64,
@@ -11,13 +16,16 @@ pub struct Credentials {
   received_at: u64,
 }
 impl Credentials {
-  pub fn new(access_token: Token, scope: String, expires_in: u64, refresh_token: Option<Token>, user_id: Option<u64>) -> Self {
+  pub fn new(client_credentials: &Rc<ClientCreds>, response: TokenResponse) -> Self {
+    let TokenResponse { access_token, user_id, scope, expires_in, refresh_token } = response;
+    
     Self {
-      access_token,
+      client_credentials: client_credentials.clone(),
+      access_token: access_token.into(),
       user_id,
       scope,
       expires_in,
-      refresh_token,
+      refresh_token: refresh_token.map(Token::from),
       received_at: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs(),
     }
   }
@@ -32,28 +40,6 @@ impl Credentials {
   }
   pub fn user_id(&self) -> Option<&u64> {
     self.user_id.as_ref()
-  }
-}
-impl Debug for Credentials {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("Credentials")
-      .field("access_token", &"[Redacted]")
-      .field("scope", &self.scope)
-      .field("expires_in", &self.expires_in)
-      .field("refresh_token", &"[Redacted]")
-      .field("received_at", &self.received_at)
-      .finish()
-  }
-}
-impl From<TokenResponse> for Credentials {
-  fn from(response: TokenResponse) -> Self {
-    Self::new(
-      response.access_token.into(),
-      response.scope,
-      response.expires_in,
-      response.refresh_token.map(Token::from),
-      response.user_id,
-    )
   }
 }
 
