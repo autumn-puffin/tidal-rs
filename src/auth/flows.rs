@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::{error::ApiErrorResponse, Error, Result};
-use super::{oauth, AuthError, TokenResponse, Credentials};
+use super::{credentials::Token, oauth, AuthError, Credentials, TokenResponse};
 use serde::Deserialize;
 
 
@@ -18,7 +18,7 @@ impl ClientFlow for super::Auth {
       .post("https://auth.tidal.com/v1/oauth2/token")
       .form(&params).send()?;
 
-    self.credentials = Some(res.json::<LimitedTokenResponse>()?.into());
+    self.credentials = Some(res.json::<TokenResponse>()?.into());
     Ok(())
   } 
 }
@@ -135,18 +135,6 @@ impl DeviceFlow for super::Auth {
       res => return res,
     }}
     Err(AuthError::MaxRetriesReached)?
-  }
-}
-
-#[derive(Deserialize)]
-struct LimitedTokenResponse {
-  access_token: String,
-  scope: String,
-  expires_in: u64,
-}
-impl From<LimitedTokenResponse> for Credentials {
-  fn from(response: LimitedTokenResponse) -> Self {
-    Credentials::new(response.access_token, response.scope, response.expires_in, None, None)
   }
 }
 

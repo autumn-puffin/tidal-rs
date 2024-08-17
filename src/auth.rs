@@ -7,52 +7,23 @@ use serde::Deserialize;
 mod oauth;
 pub mod flows;
 pub use flows::{ClientFlow, UserFlow, DeviceFlow};
-
+pub mod credentials;
+pub use credentials::Credentials;
 
 #[derive(Deserialize)]
 pub struct TokenResponse {
   access_token: String,
-  user_id: u64,
   scope: String,
   expires_in: u64,
-  refresh_token: String,
+  #[serde(default)]
+  user_id: Option<u64>,
+  #[serde(default)]
+  refresh_token: Option<String>,
 }
 impl Debug for TokenResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TokenResponse").field("access_token", &"[Redacted]").field("user_id", &self.user_id).field("scope", &self.scope).field("expires_in", &self.expires_in).field("refresh_token", &"[Redacted]").finish()
     }
-}
-pub struct Credentials {
-  access_token: String,
-  scope: String,
-  expires_in: u64,
-  refresh_token: Option<String>,
-  user_id: Option<u64>,
-
-  received_at: u64,
-}
-impl Credentials {
-  pub fn new(access_token: String, scope: String, expires_in: u64, refresh_token: Option<String>, user_id: Option<u64>) -> Self { Self {
-    access_token,
-    user_id,
-    scope,
-    expires_in,
-    refresh_token,
-    received_at: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs(),
-  }}
-  pub fn expires_at(&self) -> u64 {
-    self.received_at + self.expires_in
-  }
-}
-impl Debug for Credentials {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-      f.debug_struct("Credentials").field("access_token", &"[Redacted]").field("scope", &self.scope).field("expires_in", &self.expires_in).field("refresh_token", &"[Redacted]").field("received_at", &self.received_at).finish()
-  }
-}
-impl From<TokenResponse> for Credentials {
-  fn from(response: TokenResponse) -> Self {
-    Self::new(response.access_token, response.scope, response.expires_in, Some(response.refresh_token), Some(response.user_id))
-  }
 }
 
 pub struct Auth {
@@ -83,10 +54,10 @@ impl Auth {
     let client = self.client()?;
     let creds = self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?;
     
-    if creds.refresh_token.is_some() {
+    if let Some(refresh_token) = creds.refresh_token() {
       let mut params = HashMap::new();
       params.insert("grant_type", "refresh_token");
-      params.insert("refresh_token", creds.refresh_token.as_ref().unwrap());
+      params.insert("refresh_token", refresh_token);
 
       let res = client
         .post("https://auth.tidal.com/v1/oauth2/token")
