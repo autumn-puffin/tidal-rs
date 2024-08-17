@@ -6,3 +6,6 @@ pub mod client;
 /// Module for authentication and credentials
 pub mod auth;
 pub mod error;
+
+#[cfg(test)]
+mod tests;
