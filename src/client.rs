@@ -1,3 +1,14 @@
+use std::rc::Rc;
+
+use crate::{auth::Auth, catalog::Catalog};
+
+pub struct Client {
+  credentials: Rc<ClientCreds>,
+
+  auth: Auth,
+  catalog: Catalog,
+}
+
 pub struct ClientCreds {
   client_id: String,
   client_secret: String,
