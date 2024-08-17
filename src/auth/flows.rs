@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::{error::ApiErrorResponse, Error, Result};
-use super::{credentials::Token, oauth, AuthError, Credentials, TokenResponse};
+use super::{credentials::GrantType, oauth, AuthError, Credentials, TokenResponse};
 use reqwest::blocking::Client;
 use serde::Deserialize;
 
@@ -21,7 +21,7 @@ impl ClientFlow for super::Auth {
       .basic_auth(user, Some(pass))
       .form(&params).send()?;
 
-    self.credentials = Some(Credentials::new(&self.client_credentials, res.json::<TokenResponse>()?));
+    self.credentials = Some(Credentials::new(GrantType::ClientCredentials, &self.client_credentials, res.json::<TokenResponse>()?));
     Ok(())
   } 
 }
@@ -70,7 +70,7 @@ impl UserFlow for super::Auth {
       .basic_auth(user, Some(pass))
       .form(&params).send()?;
 
-    self.credentials = Some(Credentials::new(&self.client_credentials, res.json::<TokenResponse>()?));
+    self.credentials = Some(Credentials::new(GrantType::AuthorizationCode, &self.client_credentials, res.json::<TokenResponse>()?));
     Ok(())
 
   }
@@ -114,7 +114,7 @@ impl DeviceFlow for super::Auth {
     
 
     if res.status().is_success() {
-      self.credentials = Some(Credentials::new(&self.client_credentials, res.json::<TokenResponse>()?));
+      self.credentials = Some(Credentials::new(GrantType::DeviceCode, &self.client_credentials, res.json::<TokenResponse>()?));
       Ok(())
     } else {
       let err = res.json::<ApiErrorResponse>()?;

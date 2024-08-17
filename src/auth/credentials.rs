@@ -6,6 +6,7 @@ use std::{fmt::Debug, ops::Deref, rc::Rc};
 #[derive(Debug)]
 pub struct Credentials {
   client_credentials: Rc<ClientCreds>,
+  grant_type: GrantType,
 
   access_token: Token,
   scope: String,
@@ -16,10 +17,11 @@ pub struct Credentials {
   received_at: u64,
 }
 impl Credentials {
-  pub fn new(client_credentials: &Rc<ClientCreds>, response: TokenResponse) -> Self {
+  pub fn new(grant_type: GrantType, client_credentials: &Rc<ClientCreds>, response: TokenResponse) -> Self {
     let TokenResponse { access_token, user_id, scope, expires_in, refresh_token } = response;
     
     Self {
+      grant_type,
       client_credentials: client_credentials.clone(),
       access_token: access_token.into(),
       user_id,
@@ -67,4 +69,12 @@ impl Token {
   pub fn as_str(&self) -> &str {
     &self.0
   }
+}
+
+#[derive(Debug)]
+pub enum GrantType {
+  ClientCredentials,
+  AuthorizationCode,
+  DeviceCode,
+  RefreshToken,
 }

@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fmt::Debug, rc::Rc};
 use crate::{client::ClientCreds, error::ApiErrorResponse, Result};
+use credentials::GrantType;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 
@@ -56,7 +57,7 @@ impl Auth {
         .form(&params).send()?;
 
       if res.status().is_success() {
-        self.credentials = Some(Credentials::new(&self.client_credentials, res.json::<TokenResponse>()?));
+        self.credentials = Some(Credentials::new(GrantType::RefreshToken, &self.client_credentials, res.json::<TokenResponse>()?));
       } else {
         let err = res.json::<ApiErrorResponse>()?;
         Err(AuthError::ApiError(err))?
