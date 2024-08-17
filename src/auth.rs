@@ -1,7 +1,6 @@
 use std::{collections::HashMap, fmt::Debug, rc::Rc};
-use crate::{client::ClientCreds, error::ApiErrorResponse, Result};
+use crate::{client::ClientCreds, endpoints::Endpoint, error::ApiErrorResponse, utils::oauth_request_helper, Result};
 use credentials::GrantType;
-use reqwest::blocking::Client;
 use serde::Deserialize;
 
 mod oauth;
@@ -42,22 +41,19 @@ impl Auth {
   }}
 
   pub fn refresh_creds(&mut self) -> Result<()> {
-    let client = Client::new();
+    let endpoint = Endpoint::OAuth2Token;
+    let grant = GrantType::RefreshToken;
+    let client_credentials = &self.client_credentials;
     let creds = self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?;
-    
+
     if let Some(refresh_token) = creds.refresh_token() {
       let mut params = HashMap::new();
-      params.insert("grant_type", "refresh_token");
       params.insert("refresh_token", refresh_token);
 
-      let (user, pass) = self.client_credentials.as_tuple();
-      let res = client
-        .post("https://auth.tidal.com/v1/oauth2/token")
-        .basic_auth(user, Some(pass))
-        .form(&params).send()?;
+      let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
 
       if res.status().is_success() {
-        self.credentials = Some(Credentials::new(GrantType::RefreshToken, &self.client_credentials, res.json::<TokenResponse>()?));
+        self.credentials = Some(Credentials::new(GrantType::RefreshToken, client_credentials, res.json::<TokenResponse>()?));
       } else {
         let err = res.json::<ApiErrorResponse>()?;
         Err(AuthError::ApiError(err))?

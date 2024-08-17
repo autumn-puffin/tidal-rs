@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::{error::ApiErrorResponse, Error, Result};
+use crate::{endpoints::Endpoint, error::ApiErrorResponse, utils::{oauth_request_helper, post_request_helper}, Error, Result};
 use super::{credentials::GrantType, oauth, AuthError, Credentials, TokenResponse};
 use reqwest::blocking::Client;
 use serde::Deserialize;
@@ -10,18 +10,13 @@ pub trait ClientFlow {
 }
 impl ClientFlow for super::Auth {
   fn client_login(&mut self) -> Result<()> {
-    let client = Client::new();
+    let endpoint = Endpoint::OAuth2Token;
+    let grant = GrantType::ClientCredentials;
+    let client_credentials = &self.client_credentials;
 
-    let mut params = HashMap::new();
-    params.insert("grant_type", "client_credentials");
+    let res = oauth_request_helper( endpoint, grant, client_credentials, None).send()?;
 
-    let (user, pass) = self.client_credentials.as_tuple();
-    let res = client
-      .post("https://auth.tidal.com/v1/oauth2/token")
-      .basic_auth(user, Some(pass))
-      .form(&params).send()?;
-
-    self.credentials = Some(Credentials::new(GrantType::ClientCredentials, &self.client_credentials, res.json::<TokenResponse>()?));
+    self.credentials = Some(Credentials::new(grant, client_credentials, res.json::<TokenResponse>()?));
     Ok(())
   } 
 }
@@ -37,7 +32,8 @@ impl UserFlow for super::Auth {
     
     let (pkce_challenge, pkce_verifier) = oauth::pkce::new_random_sha256();
     let auth_url = format!(
-      "https://login.tidal.com/authorize?response_type=code&client_id={}&redirect_uri={}&scope={}&code_challenge_method=S256&code_challenge={}", 
+      "{}?response_type=code&client_id={}&redirect_uri={}&scope={}&code_challenge_method=S256&code_challenge={}", 
+      Endpoint::LoginAuthorize.to_string(),
       self.client_credentials.id(), 
       &redirect_uri, 
       scopes.join("+"), 
@@ -52,25 +48,22 @@ impl UserFlow for super::Auth {
   }
   
   fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {
-    let redirect_uri = self.redirect_uri.clone().ok_or(AuthError::MissingRedirectUri)?;
-
-    let client = Client::new();
+    let endpoint = Endpoint::OAuth2Token;
+    let grant = GrantType::AuthorizationCode;
+    let client_credentials = &self.client_credentials;
+    
+    let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::MissingRedirectUri)?;
     let verifier = info.pkce_verifier.as_string();
     
     let mut params = HashMap::new();
-    params.insert("grant_type", "authorization_code");
     params.insert("client_id", self.client_credentials.id());
     params.insert("code", &code);
-    params.insert("redirect_uri", &redirect_uri);
+    params.insert("redirect_uri", redirect_uri);
     params.insert("code_verifier", &verifier);
 
-    let (user, pass) = self.client_credentials.as_tuple();
-    let res = client
-      .post("https://auth.tidal.com/v1/oauth2/token")
-      .basic_auth(user, Some(pass))
-      .form(&params).send()?;
+    let res = oauth_request_helper(endpoint, grant, &client_credentials, Some(params)).send()?;
 
-    self.credentials = Some(Credentials::new(GrantType::AuthorizationCode, &self.client_credentials, res.json::<TokenResponse>()?));
+    self.credentials = Some(Credentials::new(grant, client_credentials, res.json::<TokenResponse>()?));
     Ok(())
 
   }
@@ -84,37 +77,34 @@ pub trait DeviceFlow {
 impl DeviceFlow for super::Auth {
   fn device_login_init(&self) -> Result<DeviceFlowResponse> {
     let client = Client::new();
+    let endpoint = Endpoint::OAuth2DeviceAuth;
+    let client_credentials = &self.client_credentials;
+
 
     let mut params = HashMap::new();
     params.insert("scope", "r_usr+w_usr+w_sub");
     params.insert("client_id", &self.client_credentials.id());
 
-    let (user, pass) = self.client_credentials.as_tuple();
-    let res = client
-      .post("https://auth.tidal.com/v1/oauth2/device_authorization")
-      .basic_auth(user, Some(pass))
+    let res = post_request_helper(&client, endpoint, &client_credentials)
       .form(&params).send()?;
 
     Ok(res.json()?)
   }
   fn try_device_login_finalize(&mut self, response: &DeviceFlowResponse) -> Result<()> {
-    let client = Client::new();
+    let endpoint = Endpoint::OAuth2Token;
+    let grant = GrantType::DeviceCode;
+    let client_credentials = &self.client_credentials;
 
     let mut params = HashMap::new();
     params.insert("scope", "r_usr+w_usr+w_sub");
-    params.insert("grant_type", "urn:ietf:params:oauth:grant-type:device_code");
     params.insert("client_id", &self.client_credentials.id());
     params.insert("device_code", &response.device_code);
     
-    let (user, pass) = self.client_credentials.as_tuple();
-    let res = client
-      .post("https://auth.tidal.com/v1/oauth2/token")
-      .basic_auth(user, Some(pass))
-      .form(&params).send()?;
+    let res = oauth_request_helper(endpoint, grant, &client_credentials, Some(params)).send()?;
     
 
     if res.status().is_success() {
-      self.credentials = Some(Credentials::new(GrantType::DeviceCode, &self.client_credentials, res.json::<TokenResponse>()?));
+      self.credentials = Some(Credentials::new(GrantType::DeviceCode, client_credentials, res.json::<TokenResponse>()?));
       Ok(())
     } else {
       let err = res.json::<ApiErrorResponse>()?;

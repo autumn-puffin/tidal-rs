@@ -71,10 +71,20 @@ impl Token {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum GrantType {
   ClientCredentials,
   AuthorizationCode,
   DeviceCode,
   RefreshToken,
+}
+impl GrantType {
+  pub fn as_str(&self) -> &str {
+    match self {
+      Self::ClientCredentials => "client_credentials",
+      Self::AuthorizationCode => "authorization_code",
+      Self::DeviceCode => "urn:ietf:params:oauth:grant-type:device_code",
+      Self::RefreshToken => "refresh_token",
+    }
+  }
 }
