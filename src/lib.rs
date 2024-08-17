@@ -5,6 +5,12 @@ pub use error::{Error, Result};
 pub mod client;
 /// Module for authentication and credentials
 pub mod auth;
+
+pub mod endpoints;
+
+pub(crate) mod utils;
+
+
 pub mod error;
 
 #[cfg(test)]
