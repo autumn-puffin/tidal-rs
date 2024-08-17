@@ -34,7 +34,7 @@ impl UserFlow for super::Auth {
     
     let (pkce_challenge, pkce_verifier) = oauth::pkce::new_random_sha256();
     let auth_url = format!(
-      "https://auth.tidal.com/v1/oauth2/authorize?response_type=code&client_id={}&redirect_uri={}&scope={}&code_challenge_method=S256&code_challenge={}", 
+      "https://login.tidal.com/authorize?response_type=code&client_id={}&redirect_uri={}&scope={}&code_challenge_method=S256&code_challenge={}", 
       self.client_credentials.id(), 
       &redirect_uri, 
       scopes.join("+"), 
