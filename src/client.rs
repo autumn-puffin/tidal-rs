@@ -6,10 +6,10 @@ impl ClientCreds {
   pub fn new(client_id: String, client_secret: String) -> Self {
     Self { client_id, client_secret }
   }
-  pub fn id(&self) -> &String {
+  pub fn id(&self) -> &str {
     &self.client_id
   }
-  pub fn secret(&self) -> &String {
+  pub fn secret(&self) -> &str {
     &self.client_secret
   }
 }
