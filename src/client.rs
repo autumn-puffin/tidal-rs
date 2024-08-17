@@ -12,6 +12,9 @@ impl ClientCreds {
   pub fn secret(&self) -> &str {
     &self.client_secret
   }
+  pub fn as_tuple(&self) -> (&str, &str) {
+    (&self.client_id, &self.client_secret)
+  }
 }
 impl std::fmt::Debug for ClientCreds {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
