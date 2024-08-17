@@ -1,7 +1,6 @@
 use std::{collections::HashMap, fmt::Debug, rc::Rc};
 use crate::{client::ClientCreds, error::ApiErrorResponse, Result};
-use base64::prelude::*;
-use reqwest::{blocking::Client, header::HeaderMap};
+use reqwest::blocking::Client;
 use serde::Deserialize;
 
 mod oauth;
@@ -40,18 +39,9 @@ impl Auth {
     redirect_uri,
     credentials: None,
   }}
-  
-  pub fn client(&self) -> Result<Client> {
-    let client_creds = &self.client_credentials;
-    let mut headers = HeaderMap::new();
-    let header_auth = format!("Basic {}", BASE64_STANDARD.encode(format!("{}:{}", client_creds.id(), client_creds.secret()))); 
-    headers.insert("Authorization", header_auth.parse()?); // TODO: use better error 
-
-    Client::builder().default_headers(headers).build().map_err(Into::into)
-  } 
 
   pub fn refresh_creds(&mut self) -> Result<()> {
-    let client = self.client()?;
+    let client = Client::new();
     let creds = self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?;
     
     if let Some(refresh_token) = creds.refresh_token() {
@@ -59,8 +49,10 @@ impl Auth {
       params.insert("grant_type", "refresh_token");
       params.insert("refresh_token", refresh_token);
 
+      let (user, pass) = self.client_credentials.as_tuple();
       let res = client
         .post("https://auth.tidal.com/v1/oauth2/token")
+        .basic_auth(user, Some(pass))
         .form(&params).send()?;
 
       if res.status().is_success() {

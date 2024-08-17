@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use crate::{error::ApiErrorResponse, Error, Result};
 use super::{credentials::Token, oauth, AuthError, Credentials, TokenResponse};
+use reqwest::blocking::Client;
 use serde::Deserialize;
 
 
@@ -9,13 +10,15 @@ pub trait ClientFlow {
 }
 impl ClientFlow for super::Auth {
   fn client_login(&mut self) -> Result<()> {
-    let client = self.client()?;
+    let client = Client::new();
 
     let mut params = HashMap::new();
     params.insert("grant_type", "client_credentials");
 
+    let (user, pass) = self.client_credentials.as_tuple();
     let res = client
       .post("https://auth.tidal.com/v1/oauth2/token")
+      .basic_auth(user, Some(pass))
       .form(&params).send()?;
 
     self.credentials = Some(Credentials::new(&self.client_credentials, res.json::<TokenResponse>()?));
@@ -51,7 +54,7 @@ impl UserFlow for super::Auth {
   fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {
     let redirect_uri = self.redirect_uri.clone().ok_or(AuthError::MissingRedirectUri)?;
 
-    let client = self.client()?;
+    let client = Client::new();
     let verifier = info.pkce_verifier.as_string();
     
     let mut params = HashMap::new();
@@ -61,8 +64,10 @@ impl UserFlow for super::Auth {
     params.insert("redirect_uri", &redirect_uri);
     params.insert("code_verifier", &verifier);
 
+    let (user, pass) = self.client_credentials.as_tuple();
     let res = client
       .post("https://auth.tidal.com/v1/oauth2/token")
+      .basic_auth(user, Some(pass))
       .form(&params).send()?;
 
     self.credentials = Some(Credentials::new(&self.client_credentials, res.json::<TokenResponse>()?));
@@ -78,20 +83,22 @@ pub trait DeviceFlow {
 }
 impl DeviceFlow for super::Auth {
   fn device_login_init(&self) -> Result<DeviceFlowResponse> {
-    let client = self.client()?;
+    let client = Client::new();
 
     let mut params = HashMap::new();
     params.insert("scope", "r_usr+w_usr+w_sub");
     params.insert("client_id", &self.client_credentials.id());
 
+    let (user, pass) = self.client_credentials.as_tuple();
     let res = client
       .post("https://auth.tidal.com/v1/oauth2/device_authorization")
+      .basic_auth(user, Some(pass))
       .form(&params).send()?;
 
     Ok(res.json()?)
   }
   fn try_device_login_finalize(&mut self, response: &DeviceFlowResponse) -> Result<()> {
-    let client = self.client()?;
+    let client = Client::new();
 
     let mut params = HashMap::new();
     params.insert("scope", "r_usr+w_usr+w_sub");
@@ -99,14 +106,11 @@ impl DeviceFlow for super::Auth {
     params.insert("client_id", &self.client_credentials.id());
     params.insert("device_code", &response.device_code);
     
-    
+    let (user, pass) = self.client_credentials.as_tuple();
     let res = client
       .post("https://auth.tidal.com/v1/oauth2/token")
-      .form(&[
-        ("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
-        ("device_code", &response.device_code),
-        ("client_id", &self.client_credentials.id()),
-      ]).send()?;
+      .basic_auth(user, Some(pass))
+      .form(&params).send()?;
     
 
     if res.status().is_success() {
