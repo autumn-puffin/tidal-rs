@@ -43,6 +43,12 @@ impl Credentials {
   pub fn user_id(&self) -> Option<&u64> {
     self.user_id.as_ref()
   }
+  pub fn grant_type(&self) -> &GrantType {
+    &self.grant_type
+  }
+  pub fn client_credentials(&self) -> &Rc<ClientCreds> {
+    &self.client_credentials
+  }
 }
 
 pub struct Token(pub String);

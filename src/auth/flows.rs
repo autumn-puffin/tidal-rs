@@ -1,24 +1,32 @@
-use std::collections::HashMap;
-use crate::{endpoints::Endpoint, error::ApiErrorResponse, utils::{oauth_request_helper, post_request_helper}, Error, Result};
+use std::{collections::HashMap, rc::Rc};
+use crate::{client::ClientCreds, endpoints::Endpoint, error::ApiErrorResponse, utils::{oauth_request_helper, post_request_helper}, Error, Result};
 use super::{credentials::GrantType, oauth, AuthError, Credentials, TokenResponse};
 use reqwest::blocking::Client;
 use serde::Deserialize;
 
 
+fn client_login_impl(client_credentials: &Rc<ClientCreds>) -> Result<Credentials> {
+  let endpoint = Endpoint::OAuth2Token;
+  let grant = GrantType::ClientCredentials;
+
+  let res = oauth_request_helper( endpoint, grant, client_credentials, None).send()?;
+
+  Ok(Credentials::new(grant, client_credentials, res.json::<TokenResponse>()?))
+}
 pub trait ClientFlow {
   fn client_login(&mut self) -> Result<()>;
 }
 impl ClientFlow for super::Auth {
   fn client_login(&mut self) -> Result<()> {
-    let endpoint = Endpoint::OAuth2Token;
-    let grant = GrantType::ClientCredentials;
-    let client_credentials = &self.client_credentials;
-
-    let res = oauth_request_helper( endpoint, grant, client_credentials, None).send()?;
-
-    self.credentials = Some(Credentials::new(grant, client_credentials, res.json::<TokenResponse>()?));
+    self.credentials = Some(client_login_impl(&self.client_credentials)?);
     Ok(())
   } 
+}
+impl ClientFlow for Credentials {
+  fn client_login(&mut self) -> Result<()> {
+    *self = client_login_impl(&self.client_credentials())?;
+    Ok(())
+  }
 }
 
 pub trait UserFlow {
@@ -133,30 +141,34 @@ impl DeviceFlow for super::Auth {
 }
 
 pub trait RefreshFlow {
-  fn refresh_creds(&mut self) -> Result<()>;
+  fn refresh(&mut self) -> Result<()>;
 }
 impl RefreshFlow for super::Auth {
-  fn refresh_creds(&mut self) -> Result<()> {
-    let endpoint = Endpoint::OAuth2Token;
-    let grant = GrantType::RefreshToken;
-    let client_credentials = &self.client_credentials;
-    let creds = self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?;
+  fn refresh(&mut self) -> Result<()> {
+    self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?.refresh()
+  }
+}
+impl RefreshFlow for Credentials {
+  fn refresh(&mut self) -> Result<()> {
+    match self.grant_type() {
+      GrantType::ClientCredentials => self.client_login(),
+      _ => {
+        let endpoint = Endpoint::OAuth2Token;
+        let grant = GrantType::RefreshToken;
+        let client_credentials = self.client_credentials();
+        let refresh_token = self.refresh_token().unwrap();
 
-    if let Some(refresh_token) = creds.refresh_token() {
-      let mut params = HashMap::new();
-      params.insert("refresh_token", refresh_token);
+        let mut params = HashMap::new();
+        params.insert("refresh_token", refresh_token);
 
-      let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
-
-      if res.status().is_success() {
-        self.credentials = Some(Credentials::new(GrantType::RefreshToken, client_credentials, res.json::<TokenResponse>()?));
-      } else {
-        let err = res.json::<ApiErrorResponse>()?;
-        Err(AuthError::ApiError(err))?
-      }
-      Ok(())
-    } else {
-      self.client_login()
+        let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
+        if res.status().is_success() {
+          *self = Credentials::new(GrantType::RefreshToken, client_credentials, res.json::<TokenResponse>()?);
+        } else {
+          Err(AuthError::ApiError(res.json::<ApiErrorResponse>()?))?
+        }
+        Ok(())
+      },
     }
   }
 }
