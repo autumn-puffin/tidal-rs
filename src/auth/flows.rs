@@ -132,6 +132,35 @@ impl DeviceFlow for super::Auth {
   }
 }
 
+pub trait RefreshFlow {
+  fn refresh_creds(&mut self) -> Result<()>;
+}
+impl RefreshFlow for super::Auth {
+  fn refresh_creds(&mut self) -> Result<()> {
+    let endpoint = Endpoint::OAuth2Token;
+    let grant = GrantType::RefreshToken;
+    let client_credentials = &self.client_credentials;
+    let creds = self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?;
+
+    if let Some(refresh_token) = creds.refresh_token() {
+      let mut params = HashMap::new();
+      params.insert("refresh_token", refresh_token);
+
+      let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
+
+      if res.status().is_success() {
+        self.credentials = Some(Credentials::new(GrantType::RefreshToken, client_credentials, res.json::<TokenResponse>()?));
+      } else {
+        let err = res.json::<ApiErrorResponse>()?;
+        Err(AuthError::ApiError(err))?
+      }
+      Ok(())
+    } else {
+      self.client_login()
+    }
+  }
+}
+
 #[derive(Debug)]
 pub struct UserFlowInfo {
   pub auth_url: String,

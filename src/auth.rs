@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 mod oauth;
 pub mod flows;
-pub use flows::{ClientFlow, UserFlow, DeviceFlow};
+pub use flows::{ClientFlow, UserFlow, DeviceFlow, RefreshFlow};
 pub mod credentials;
 pub use credentials::Credentials;
 
