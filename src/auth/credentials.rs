@@ -49,6 +49,9 @@ impl Credentials {
   pub fn client_credentials(&self) -> &Rc<ClientCreds> {
     &self.client_credentials
   }
+  pub fn scope(&self) -> &str {
+    &self.scope
+  }
 }
 
 pub struct Token(pub String);
