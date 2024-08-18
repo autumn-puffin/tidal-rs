@@ -1,30 +1,30 @@
 use std::rc::Rc;
 
-use crate::{auth::Auth, catalog::Catalog};
+use crate::{auth::Auth, catalogue::Catalogue};
 
 pub struct Client {
   credentials: Rc<ClientCreds>,
 
   auth: Auth,
-  catalog: Catalog,
+  catalogue: Catalogue,
 }
 impl Client {
   pub fn new(client_credentials: ClientCreds) -> Self {
     let credentials = Rc::new(client_credentials);
     let auth = Auth::new(credentials.clone(), None);
-    let catalog = Catalog::new(credentials.clone());
+    let catalogue = Catalogue::new(credentials.clone());
 
     Self {
       credentials,
       auth,
-      catalog,
+      catalogue,
     }
   }
   pub fn auth(&self) -> &Auth {
     &self.auth
   }
-  pub fn catalog(&self) -> &Catalog {
-    &self.catalog
+  pub fn catalogue(&self) -> &Catalogue {
+    &self.catalogue
   }
 }
 

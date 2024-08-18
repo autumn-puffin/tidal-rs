@@ -1,11 +1,11 @@
 use std::{cell::RefCell, rc::Rc};
 use crate::{auth::Credentials, client::ClientCreds};
 
-pub struct Catalog {
+pub struct Catalogue {
   client_credentials: Rc<ClientCreds>,
   auth_credentials: Option<Rc<RefCell<Credentials>>>,
 }
-impl Catalog {
+impl Catalogue {
   pub fn new(client_credentials: Rc<ClientCreds>) -> Self {
     Self {
       client_credentials,

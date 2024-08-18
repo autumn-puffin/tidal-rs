@@ -6,7 +6,7 @@ pub mod client;
 /// Module for authentication and credentials
 pub mod auth;
 /// Module for accessing and searching the Tidal catalog
-pub mod catalog;
+pub mod catalogue;
 
 pub mod endpoints;
 
