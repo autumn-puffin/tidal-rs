@@ -1,6 +1,5 @@
-use std::{collections::HashMap, fmt::Debug, rc::Rc};
-use crate::{client::ClientCreds, endpoints::Endpoint, error::ApiErrorResponse, utils::oauth_request_helper, Result};
-use credentials::GrantType;
+use std::{cell::RefCell, fmt::Debug, rc::Rc};
+use crate::{client::ClientCreds, error::ApiErrorResponse, Result};
 use serde::Deserialize;
 
 mod oauth;
@@ -30,7 +29,7 @@ pub struct Auth {
   /// Authorisation Configuration
   redirect_uri: Option<String>,
   /// Credentials for the current session
-  credentials: Option<Credentials>,
+  credentials: Option<Rc<RefCell<Credentials>>>,
   
 }
 impl Auth {
@@ -40,37 +39,18 @@ impl Auth {
     credentials: None,
   }}
 
-  pub fn refresh_creds(&mut self) -> Result<()> {
-    let endpoint = Endpoint::OAuth2Token;
-    let grant = GrantType::RefreshToken;
-    let client_credentials = &self.client_credentials;
-    let creds = self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?;
-
-    if let Some(refresh_token) = creds.refresh_token() {
-      let mut params = HashMap::new();
-      params.insert("refresh_token", refresh_token);
-
-      let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
-
-      if res.status().is_success() {
-        self.credentials = Some(Credentials::new(GrantType::RefreshToken, client_credentials, res.json::<TokenResponse>()?));
-      } else {
-        let err = res.json::<ApiErrorResponse>()?;
-        Err(AuthError::ApiError(err))?
-      }
-      Ok(())
-    } else {
-      self.client_login()
-    }
-  }
-
-  pub fn get_credentials(&mut self) -> Result<&Credentials> {
-    let expire_time = self.credentials.as_ref().ok_or(AuthError::Unauthenticated)?.expires_at();
+  pub fn get_credentials(&mut self) -> Result<Rc<RefCell<Credentials>>> {
+    let credentials = self.credentials.clone().ok_or(AuthError::Unauthenticated)?;
+    let expire_time = credentials.borrow().expires_at();
     let cur_time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
     if expire_time <= cur_time {
-      self.refresh_creds()?;
+      self.refresh()?;
     }
-    Ok(self.credentials.as_ref().unwrap())
+    Ok(credentials)
+  }
+
+  pub fn set_redirect_uri(&mut self, redirect_uri: String) {
+    self.redirect_uri = Some(redirect_uri);
   }
 }
 

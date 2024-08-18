@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use crate::{client::ClientCreds, endpoints::Endpoint, error::ApiErrorResponse, utils::{oauth_request_helper, post_request_helper}, Error, Result};
 use super::{credentials::GrantType, oauth, AuthError, Credentials, TokenResponse};
 use reqwest::blocking::Client;
@@ -18,7 +18,7 @@ pub trait ClientFlow {
 }
 impl ClientFlow for super::Auth {
   fn client_login(&mut self) -> Result<()> {
-    self.credentials = Some(client_login_impl(&self.client_credentials)?);
+    self.credentials = Some(Rc::new(RefCell::new(client_login_impl(&self.client_credentials)?)));
     Ok(())
   } 
 }
@@ -71,7 +71,8 @@ impl UserFlow for super::Auth {
 
     let res = oauth_request_helper(endpoint, grant, &client_credentials, Some(params)).send()?;
 
-    self.credentials = Some(Credentials::new(grant, client_credentials, res.json::<TokenResponse>()?));
+    let credentials = Credentials::new(grant, client_credentials, res.json::<TokenResponse>()?);
+    self.credentials = Some(Rc::new(RefCell::new(credentials)));
     Ok(())
 
   }
@@ -112,7 +113,8 @@ impl DeviceFlow for super::Auth {
     
 
     if res.status().is_success() {
-      self.credentials = Some(Credentials::new(GrantType::DeviceCode, client_credentials, res.json::<TokenResponse>()?));
+      let credentials = Credentials::new(GrantType::DeviceCode, client_credentials, res.json::<TokenResponse>()?);
+      self.credentials = Some(Rc::new(RefCell::new(credentials)));
       Ok(())
     } else {
       let err = res.json::<ApiErrorResponse>()?;
@@ -145,7 +147,7 @@ pub trait RefreshFlow {
 }
 impl RefreshFlow for super::Auth {
   fn refresh(&mut self) -> Result<()> {
-    self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?.refresh()
+    self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?.borrow_mut().refresh()
   }
 }
 impl RefreshFlow for Credentials {
