@@ -8,6 +8,25 @@ pub struct Client {
   auth: Auth,
   catalog: Catalog,
 }
+impl Client {
+  pub fn new(client_credentials: ClientCreds) -> Self {
+    let credentials = Rc::new(client_credentials);
+    let auth = Auth::new(credentials.clone(), None);
+    let catalog = Catalog::new(credentials.clone());
+
+    Self {
+      credentials,
+      auth,
+      catalog,
+    }
+  }
+  pub fn auth(&self) -> &Auth {
+    &self.auth
+  }
+  pub fn catalog(&self) -> &Catalog {
+    &self.catalog
+  }
+}
 
 pub struct ClientCreds {
   client_id: String,

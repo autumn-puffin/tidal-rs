@@ -33,8 +33,8 @@ pub struct Auth {
   
 }
 impl Auth {
-  pub fn new(client_credentials: ClientCreds, redirect_uri: Option<String>) -> Self { Self {
-    client_credentials: Rc::new(client_credentials),
+  pub fn new(client_credentials: Rc<ClientCreds>, redirect_uri: Option<String>) -> Self { Self {
+    client_credentials: client_credentials,
     redirect_uri,
     credentials: None,
   }}
