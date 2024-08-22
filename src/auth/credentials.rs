@@ -1,11 +1,10 @@
 use crate::client::ClientCreds;
-
 use super::TokenResponse;
-use std::{fmt::Debug, ops::Deref, rc::Rc};
+use std::{fmt::Debug, ops::Deref};
 
 #[derive(Debug)]
 pub struct Credentials {
-  client_credentials: Rc<ClientCreds>,
+  client_credentials: ClientCreds,
   grant_type: GrantType,
 
   access_token: Token,
@@ -17,12 +16,12 @@ pub struct Credentials {
   received_at: u64,
 }
 impl Credentials {
-  pub fn new(grant_type: GrantType, client_credentials: &Rc<ClientCreds>, response: TokenResponse) -> Self {
+  pub fn new(grant_type: GrantType, client_credentials: ClientCreds, response: TokenResponse) -> Self {
     let TokenResponse { access_token, user_id, scope, expires_in, refresh_token } = response;
     
     Self {
       grant_type,
-      client_credentials: client_credentials.clone(),
+      client_credentials: client_credentials,
       access_token: access_token.into(),
       user_id,
       scope,
@@ -46,7 +45,7 @@ impl Credentials {
   pub fn grant_type(&self) -> &GrantType {
     &self.grant_type
   }
-  pub fn client_credentials(&self) -> &Rc<ClientCreds> {
+  pub fn client_credentials(&self) -> &ClientCreds {
     &self.client_credentials
   }
   pub fn scope(&self) -> &str {

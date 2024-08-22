@@ -1,4 +1,4 @@
-use std::{cell::RefCell, fmt::Debug, rc::Rc};
+use std::fmt::Debug;
 use crate::{client::ClientCreds, error::ApiErrorResponse, Result};
 use serde::Deserialize;
 
@@ -24,33 +24,58 @@ impl Debug for TokenResponse {
     }
 }
 
-pub struct Auth {
-  client_credentials: Rc<ClientCreds>,
+pub struct AuthClient {
+  client_credentials: ClientCreds,
   /// Authorisation Configuration
   redirect_uri: Option<String>,
   /// Credentials for the current session
-  credentials: Option<Rc<RefCell<Credentials>>>,
-  
+  credentials: Option<Credentials>,
 }
-impl Auth {
-  pub fn new(client_credentials: Rc<ClientCreds>, redirect_uri: Option<String>) -> Self { Self {
+impl AuthClient {
+  pub fn new(client_credentials: ClientCreds) -> Self { Self {
     client_credentials: client_credentials,
-    redirect_uri,
+    redirect_uri: None,
     credentials: None,
   }}
 
-  pub fn get_credentials(&mut self) -> Result<Rc<RefCell<Credentials>>> {
-    let credentials = self.credentials.clone().ok_or(AuthError::Unauthenticated)?;
-    let expire_time = credentials.borrow().expires_at();
+  pub fn get_credentials(&mut self) -> Result<&Credentials> {
+    let credentials = self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?;
+    let expire_time = credentials.expires_at();
     let cur_time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
     if expire_time <= cur_time {
-      self.refresh()?;
+      credentials.refresh()?;
     }
     Ok(credentials)
   }
 
   pub fn set_redirect_uri(&mut self, redirect_uri: String) {
     self.redirect_uri = Some(redirect_uri);
+  }
+}
+
+pub trait Auth {
+  fn get_credentials(&self) -> Result<&Credentials>;
+  fn get_credentials_mut(&mut self) -> Result<&mut Credentials>;
+
+  fn get_credentials_refresh(&mut self) -> Result<&Credentials> {
+    self.credentials_refresh()?;
+    Ok(self.get_credentials()?)
+  }
+  fn get_credentials_force_refresh(&mut self) -> Result<&Credentials> {
+    self.credentials_force_refresh()?;
+    Ok(self.get_credentials()?)
+  }
+  fn credentials_refresh(&mut self) -> Result<()> {
+    let credentials = self.get_credentials_mut()?;
+    let expire_time = credentials.expires_at();
+    let cur_time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+    if expire_time <= cur_time {
+      credentials.refresh()?;
+    }
+    Ok(())
+  }
+  fn credentials_force_refresh(&mut self) -> Result<()> {
+    self.get_credentials_mut()?.refresh()
   }
 }
 

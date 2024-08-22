@@ -1,16 +1,15 @@
-use std::rc::Rc;
-
 use dotenv_codegen::dotenv;
 use reqwest::Url;
 
-use crate::{auth::{Auth, ClientFlow, DeviceFlow, UserFlow}, client::ClientCreds};
+use crate::{auth::{AuthClient, ClientFlow, DeviceFlow, UserFlow}, client::ClientCreds};
 
-fn get_auth() -> Auth {
-  Auth::new(
+fn get_auth() -> AuthClient {
+  let mut auth = AuthClient::new(
     // Note: Testing requires setting up a .env file in the root of the project (.env is gitignored)
-    Rc::new(ClientCreds::new(dotenv!("ClientID").to_owned(), dotenv!("ClientSecret").to_owned())),
-    Some(dotenv!("RedirectURI").to_owned())
-  )
+    ClientCreds::new(dotenv!("ClientID").to_owned(), dotenv!("ClientSecret").to_owned())
+  );
+  auth.set_redirect_uri(dotenv!("RedirectURI").to_owned());
+  auth
 }
 
 #[test]

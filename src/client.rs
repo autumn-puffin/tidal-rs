@@ -1,33 +1,30 @@
-use std::rc::Rc;
-
-use crate::{auth::Auth, catalogue::Catalogue};
+use crate::{auth::AuthClient, catalogue::CatalogueClient};
+use isocountry::CountryCode;
 
 pub struct Client {
-  credentials: Rc<ClientCreds>,
-
-  auth: Auth,
-  catalogue: Catalogue,
+  credentials: ClientCreds,
+  redirect_uri: Option<String>,
+  country: Option<CountryCode>,
 }
 impl Client {
   pub fn new(client_credentials: ClientCreds) -> Self {
-    let credentials = Rc::new(client_credentials);
-    let auth = Auth::new(credentials.clone(), None);
-    let catalogue = Catalogue::new(credentials.clone());
+    let credentials = client_credentials;
 
     Self {
       credentials,
-      auth,
-      catalogue,
+      redirect_uri: None,
+      country: None,
     }
   }
-  pub fn auth(&self) -> &Auth {
-    &self.auth
+  pub fn as_auth(&self) -> AuthClient {
+    AuthClient::new(self.credentials.clone())
   }
-  pub fn catalogue(&self) -> &Catalogue {
-    &self.catalogue
+  pub fn as_catalogue(&self) -> CatalogueClient {
+    CatalogueClient::new(self.credentials.clone())
   }
 }
 
+#[derive(Clone)]
 pub struct ClientCreds {
   client_id: String,
   client_secret: String,

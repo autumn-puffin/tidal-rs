@@ -1,24 +1,24 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 use crate::{client::ClientCreds, endpoints::Endpoint, error::ApiErrorResponse, utils::{oauth_request_helper, post_request_helper}, Error, Result};
 use super::{credentials::GrantType, oauth, AuthError, Credentials, TokenResponse};
 use reqwest::blocking::Client;
 use serde::Deserialize;
 
 
-fn client_login_impl(client_credentials: &Rc<ClientCreds>) -> Result<Credentials> {
+fn client_login_impl(client_credentials: &ClientCreds) -> Result<Credentials> {
   let endpoint = Endpoint::OAuth2Token;
   let grant = GrantType::ClientCredentials;
 
   let res = oauth_request_helper( endpoint, grant, client_credentials, None).send()?;
 
-  Ok(Credentials::new(grant, client_credentials, res.json::<TokenResponse>()?))
+  Ok(Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?))
 }
 pub trait ClientFlow {
   fn client_login(&mut self) -> Result<()>;
 }
-impl ClientFlow for super::Auth {
+impl ClientFlow for super::AuthClient {
   fn client_login(&mut self) -> Result<()> {
-    self.credentials = Some(Rc::new(RefCell::new(client_login_impl(&self.client_credentials)?)));
+    self.credentials = Some(client_login_impl(&self.client_credentials)?);
     Ok(())
   } 
 }
@@ -33,9 +33,9 @@ pub trait UserFlow {
   fn user_login_init(&self) -> Result<UserFlowInfo>;
   fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()>;
 }
-impl UserFlow for super::Auth {
+impl UserFlow for super::AuthClient {
   fn user_login_init(&self) -> Result<UserFlowInfo> {
-    let redirect_uri = self.redirect_uri.clone().ok_or(AuthError::MissingRedirectUri)?;
+    let redirect_uri = self.redirect_uri.as_deref().ok_or(AuthError::MissingRedirectUri)?;
     let scopes = ["user.read".to_string()]; // TODO: make this configurable
     
     let (pkce_challenge, pkce_verifier) = oauth::pkce::new_random_sha256();
@@ -60,7 +60,7 @@ impl UserFlow for super::Auth {
     let grant = GrantType::AuthorizationCode;
     let client_credentials = &self.client_credentials;
     
-    let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::MissingRedirectUri)?;
+    let redirect_uri = self.redirect_uri.as_deref().ok_or(AuthError::MissingRedirectUri)?;
     let verifier = info.pkce_verifier.as_string();
     
     let mut params = HashMap::new();
@@ -71,8 +71,8 @@ impl UserFlow for super::Auth {
 
     let res = oauth_request_helper(endpoint, grant, &client_credentials, Some(params)).send()?;
 
-    let credentials = Credentials::new(grant, client_credentials, res.json::<TokenResponse>()?);
-    self.credentials = Some(Rc::new(RefCell::new(credentials)));
+    let credentials = Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
+    self.credentials = Some(credentials);
     Ok(())
 
   }
@@ -83,7 +83,7 @@ pub trait DeviceFlow {
   fn try_device_login_finalize(&mut self, response: &DeviceFlowResponse) -> Result<()>;
   fn device_login_finalize(&mut self, response: &DeviceFlowResponse) -> Result<()>;
 }
-impl DeviceFlow for super::Auth {
+impl DeviceFlow for super::AuthClient {
   fn device_login_init(&self) -> Result<DeviceFlowResponse> {
     let client = Client::new();
     let endpoint = Endpoint::OAuth2DeviceAuth;
@@ -113,8 +113,8 @@ impl DeviceFlow for super::Auth {
     
 
     if res.status().is_success() {
-      let credentials = Credentials::new(GrantType::DeviceCode, client_credentials, res.json::<TokenResponse>()?);
-      self.credentials = Some(Rc::new(RefCell::new(credentials)));
+      let credentials = Credentials::new(GrantType::DeviceCode, client_credentials.clone(), res.json::<TokenResponse>()?);
+      self.credentials = Some(credentials);
       Ok(())
     } else {
       let err = res.json::<ApiErrorResponse>()?;
@@ -145,9 +145,9 @@ impl DeviceFlow for super::Auth {
 pub trait RefreshFlow {
   fn refresh(&mut self) -> Result<()>;
 }
-impl RefreshFlow for super::Auth {
+impl RefreshFlow for super::AuthClient {
   fn refresh(&mut self) -> Result<()> {
-    self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?.borrow_mut().refresh()
+    self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?.refresh()
   }
 }
 impl RefreshFlow for Credentials {
@@ -165,7 +165,7 @@ impl RefreshFlow for Credentials {
 
         let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
         if res.status().is_success() {
-          *self = Credentials::new(GrantType::RefreshToken, client_credentials, res.json::<TokenResponse>()?);
+          *self = Credentials::new(GrantType::RefreshToken, client_credentials.clone(), res.json::<TokenResponse>()?);
         } else {
           Err(AuthError::ApiError(res.json::<ApiErrorResponse>()?))?
         }
