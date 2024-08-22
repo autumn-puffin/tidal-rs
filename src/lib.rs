@@ -7,6 +7,8 @@ pub mod client;
 pub mod auth;
 /// Module for accessing and searching the Tidal catalog
 pub mod catalogue;
+/// Module for user related api functions
+pub mod users;
 
 pub mod endpoints;
 
