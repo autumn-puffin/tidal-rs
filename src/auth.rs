@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{client::ClientCreds, error::ApiErrorResponse, Result};
+use crate::{client::ClientCreds, error::ApiErrorResponse, Error, Result};
 use serde::Deserialize;
 
 mod oauth;
@@ -89,13 +89,13 @@ pub enum AuthError {
   MaxRetriesReached,
   Unauthenticated,
 }
-impl From<reqwest::header::InvalidHeaderValue> for AuthError {
+impl From<reqwest::header::InvalidHeaderValue> for Error {
   fn from(err: reqwest::header::InvalidHeaderValue) -> Self {
-    AuthError::InvalidHeaderValue(err)
+    Error::AuthError(AuthError::InvalidHeaderValue(err))
   }
 }
-impl From<reqwest::Error> for AuthError {
+impl From<reqwest::Error> for Error {
   fn from(err: reqwest::Error) -> Self {
-    AuthError::ReqwestError(err)
+    Error::AuthError(AuthError::ReqwestError(err))
   }
 }

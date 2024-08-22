@@ -9,12 +9,9 @@ pub enum Error {
   AuthError(AuthError),
 }
 
-impl<T> From<T> for Error
-where
-  T: Into<AuthError>,
-{
-  fn from(err: T) -> Self {
-    Error::AuthError(err.into())
+impl From<AuthError> for Error {
+  fn from(err: AuthError) -> Self {
+    Error::AuthError(err)
   }
 }
 
