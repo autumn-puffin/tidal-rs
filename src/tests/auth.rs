@@ -1,4 +1,4 @@
-use dotenv_codegen::dotenv;
+use dotenvy_macro::dotenv;
 use reqwest::Url;
 
 use crate::{auth::{AuthClient, ClientFlow, DeviceFlow, UserFlow}, client::ClientCreds};
