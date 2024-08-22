@@ -1,6 +1,6 @@
-use crate::client::ClientCreds;
-use super::TokenResponse;
-use std::{fmt::Debug, ops::Deref};
+use crate::{client::ClientCreds, endpoints::Endpoint, error::ApiErrorResponse, utils::{client_login_impl, oauth_request_helper}, Result};
+use super::{AuthError, ClientFlow, RefreshFlow, TokenResponse};
+use std::{collections::HashMap, fmt::Debug, ops::Deref};
 
 #[derive(Debug)]
 pub struct Credentials {
@@ -50,6 +50,36 @@ impl Credentials {
   }
   pub fn scope(&self) -> &str {
     &self.scope
+  }
+}
+impl ClientFlow for Credentials {
+  fn client_login(&mut self) -> Result<()> {
+    *self = client_login_impl(&self.client_credentials())?;
+    Ok(())
+  }
+}
+impl RefreshFlow for Credentials {
+  fn refresh(&mut self) -> Result<()> {
+    match self.grant_type() {
+      GrantType::ClientCredentials => self.client_login(),
+      _ => {
+        let endpoint = Endpoint::OAuth2Token;
+        let grant = GrantType::RefreshToken;
+        let client_credentials = self.client_credentials();
+        let refresh_token = self.refresh_token().unwrap();
+
+        let mut params = HashMap::new();
+        params.insert("refresh_token", refresh_token);
+
+        let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
+        if res.status().is_success() {
+          *self = Credentials::new(GrantType::RefreshToken, client_credentials.clone(), res.json::<TokenResponse>()?);
+        } else {
+          Err(AuthError::ApiError(res.json::<ApiErrorResponse>()?))?
+        }
+        Ok(())
+      },
+    }
   }
 }
 

@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use reqwest::{blocking::{Client, RequestBuilder}, Method};
 
-use crate::{auth::credentials::GrantType, client::ClientCreds, endpoints::Endpoint};
+use crate::{auth::{credentials::GrantType, Credentials, TokenResponse}, client::ClientCreds, endpoints::Endpoint, Result};
+
 
 pub fn request_helper(client: &Client, method: Method, endpoint: Endpoint, auth: &ClientCreds) -> RequestBuilder {
   let mut builder = client.request(method, endpoint.to_string());
@@ -22,4 +23,13 @@ pub fn oauth_request_helper(endpoint: Endpoint, grant: GrantType, auth: &ClientC
   builder = builder.form(&params);
 
   builder
+}
+
+pub fn client_login_impl(client_credentials: &ClientCreds) -> Result<Credentials> {
+  let endpoint = Endpoint::OAuth2Token;
+  let grant = GrantType::ClientCredentials;
+
+  let res = oauth_request_helper( endpoint, grant, client_credentials, None).send()?;
+
+  Ok(Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?))
 }
