@@ -49,7 +49,7 @@ pub struct AuthClient {
 impl AuthClient {
   pub fn new(client_credentials: ClientCreds) -> Self {
     Self {
-      client_credentials: client_credentials,
+      client_credentials,
       redirect_uri: None,
       credentials: None,
     }
@@ -121,7 +121,7 @@ impl DeviceFlow for AuthClient {
 
     let mut params = HashMap::new();
     params.insert("scope", "r_usr+w_usr+w_sub");
-    params.insert("client_id", &self.client_credentials.id());
+    params.insert("client_id", self.client_credentials.id());
 
     let res = post_request_helper(&client, endpoint, client_credentials).form(&params).send()?;
 
@@ -134,7 +134,7 @@ impl DeviceFlow for AuthClient {
 
     let mut params = HashMap::new();
     params.insert("scope", "r_usr+w_usr+w_sub");
-    params.insert("client_id", &self.client_credentials.id());
+    params.insert("client_id", self.client_credentials.id());
     params.insert("device_code", &response.device_code);
 
     let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
@@ -160,11 +160,11 @@ pub trait Auth {
 
   fn get_credentials_refresh(&mut self) -> Result<&Credentials> {
     self.credentials_refresh()?;
-    Ok(self.get_credentials()?)
+    self.get_credentials()
   }
   fn get_credentials_force_refresh(&mut self) -> Result<&Credentials> {
     self.credentials_force_refresh()?;
-    Ok(self.get_credentials()?)
+    self.get_credentials()
   }
   fn credentials_refresh(&mut self) -> Result<()> {
     let credentials = self.get_credentials_mut()?;

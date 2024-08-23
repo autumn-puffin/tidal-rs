@@ -33,7 +33,7 @@ impl Credentials {
 
     Self {
       grant_type,
-      client_credentials: client_credentials,
+      client_credentials,
       access_token: access_token.into(),
       user_id,
       scope,
@@ -66,7 +66,7 @@ impl Credentials {
 }
 impl ClientFlow for Credentials {
   fn client_login(&mut self) -> Result<()> {
-    *self = client_login_impl(&self.client_credentials())?;
+    *self = client_login_impl(self.client_credentials())?;
     Ok(())
   }
 }
@@ -120,7 +120,6 @@ impl Deref for Token {
     &self.0
   }
 }
-
 
 #[derive(Debug, Clone, Copy)]
 pub enum GrantType {
