@@ -1,5 +1,5 @@
 use crate::{client::ClientCreds, endpoints::Endpoint, error::ApiErrorResponse, utils::{client_login_impl, oauth_request_helper}, Result};
-use super::{AuthError, ClientFlow, RefreshFlow, TokenResponse};
+use super::{ClientFlow, RefreshFlow, TokenResponse};
 use std::{collections::HashMap, fmt::Debug, ops::Deref};
 
 #[derive(Debug)]
@@ -75,7 +75,7 @@ impl RefreshFlow for Credentials {
         if res.status().is_success() {
           *self = Credentials::new(GrantType::RefreshToken, client_credentials.clone(), res.json::<TokenResponse>()?);
         } else {
-          Err(AuthError::ApiError(res.json::<ApiErrorResponse>()?))?
+          return Err(res.json::<ApiErrorResponse>()?.into());
         }
         Ok(())
       },

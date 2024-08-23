@@ -96,7 +96,7 @@ impl UserFlow for AuthClient {
     params.insert("redirect_uri", redirect_uri);
     params.insert("code_verifier", &verifier);
 
-    let res = oauth_request_helper(endpoint, grant, &client_credentials, Some(params)).send()?;
+    let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
 
     let credentials = Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
     self.credentials = Some(credentials);
@@ -115,7 +115,7 @@ impl DeviceFlow for AuthClient {
     params.insert("scope", "r_usr+w_usr+w_sub");
     params.insert("client_id", &self.client_credentials.id());
 
-    let res = post_request_helper(&client, endpoint, &client_credentials)
+    let res = post_request_helper(&client, endpoint, client_credentials)
       .form(&params).send()?;
 
     Ok(res.json()?)
@@ -130,7 +130,7 @@ impl DeviceFlow for AuthClient {
     params.insert("client_id", &self.client_credentials.id());
     params.insert("device_code", &response.device_code);
     
-    let res = oauth_request_helper(endpoint, grant, &client_credentials, Some(params)).send()?;
+    let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
     
 
     if res.status().is_success() {
@@ -138,12 +138,7 @@ impl DeviceFlow for AuthClient {
       self.credentials = Some(credentials);
       Ok(())
     } else {
-      let err = res.json::<ApiErrorResponse>()?;
-      match err.error.as_str() {
-        "authorization_pending" => {
-          Err(AuthError::AuthorizationPending)?
-        },
-        _ => Err(AuthError::ApiError(err))?
+      Err(res.json::<ApiErrorResponse>()?.into())
       }
     }
   }
@@ -198,21 +193,8 @@ pub trait Auth {
 
 #[derive(Debug)]
 pub enum AuthError {
-  InvalidHeaderValue(reqwest::header::InvalidHeaderValue),
-  ReqwestError(reqwest::Error),
-  ApiError(ApiErrorResponse),
   AuthorizationPending,
   MissingRedirectUri,
   MaxRetriesReached,
   Unauthenticated,
-}
-impl From<reqwest::header::InvalidHeaderValue> for Error {
-  fn from(err: reqwest::header::InvalidHeaderValue) -> Self {
-    Error::AuthError(AuthError::InvalidHeaderValue(err))
-  }
-}
-impl From<reqwest::Error> for Error {
-  fn from(err: reqwest::Error) -> Self {
-    Error::AuthError(AuthError::ReqwestError(err))
-  }
 }
