@@ -33,6 +33,8 @@ impl Client {
   pub fn set_redirect_uri(&mut self, uri: String) {
     self.redirect_uri = Some(uri);
   }
+  pub fn set_country(&mut self, country: CountryCode) {
+    self.country = Some(country);
   }
 }
 impl Auth for Client {
@@ -123,6 +125,37 @@ impl DeviceFlow for Client {
     Ok(())
   }
 }
+
+impl Users for Client {
+  fn get_user(&self, user_id: &u64) -> Result<Response> {
+    let client = ReqwestClient::new();
+    let endpoint = Endpoint::Users(user_id);
+    let auth = self.get_credentials()?;
+
+    get_request_helper(&client, endpoint, auth).query(&[("CountryCode", self.country.unwrap().to_string())])
+      .send().map_err(Into::into)
+  }
+
+  fn get_user_subscription(&self, user_id: &u64) -> Result<Response> {
+    let client = ReqwestClient::new();
+    let endpoint = Endpoint::UsersSubscription(user_id);
+    let auth = self.get_credentials()?;
+
+    get_request_helper(&client, endpoint, auth).query(&[("CountryCode", self.country.unwrap().to_string())])
+      .send().map_err(Into::into)
+  }
+
+  fn get_user_clients(&self, user_id: &u64) -> Result<Response> {
+    let client = ReqwestClient::new();
+    let endpoint = Endpoint::UsersClients(user_id);
+    let auth = self.get_credentials()?;
+
+    get_request_helper(&client, endpoint, auth).query(&[("CountryCode", self.country.unwrap().to_string())])
+      .send().map_err(Into::into)
+  }
+}
+
+
 
 #[derive(Clone)]
 pub struct ClientCreds {
