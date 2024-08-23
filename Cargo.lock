@@ -1345,6 +1345,7 @@ dependencies = [
  "reqwest 0.12.5",
  "serde",
  "sha2",
+ "url",
 ]
 
 [[package]]

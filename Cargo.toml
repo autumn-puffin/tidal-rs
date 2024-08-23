@@ -13,6 +13,7 @@ rand = "0.8"
 sha2 = "0.10"
 serde = {version = "1.0", features = ["derive"]}
 isocountry = "0.3"
+url = "2.5"
 
 [dev-dependencies]
 dotenvy_macro = "0.15"

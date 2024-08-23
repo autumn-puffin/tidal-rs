@@ -5,7 +5,7 @@ use flows::{DeviceFlowResponse, UserFlowInfo};
 use reqwest::blocking::Client;
 use serde::Deserialize;
 
-mod oauth;
+pub(crate) mod oauth;
 pub mod flows;
 pub use flows::{ClientFlow, UserFlow, DeviceFlow, RefreshFlow};
 pub mod credentials;
@@ -139,23 +139,9 @@ impl DeviceFlow for AuthClient {
       Ok(())
     } else {
       Err(res.json::<ApiErrorResponse>()?.into())
-      }
     }
   }
-  fn device_login_finalize(&mut self, response: &DeviceFlowResponse) -> Result<()> {
-    let interval = response.interval;
-    let max_retries = response.expires_in / interval;
 
-    let mut i: u64 = 0;
-    while i < max_retries { match self.try_device_login_finalize(response) {
-      Err(Error::AuthError(AuthError::AuthorizationPending)) => {
-          i += 1;
-        std::thread::sleep(std::time::Duration::from_secs(interval));
-      },
-      res => return res,
-    }}
-    Err(AuthError::MaxRetriesReached)?
-  }
 }
 impl RefreshFlow for AuthClient {
   fn refresh(&mut self) -> Result<()> {
