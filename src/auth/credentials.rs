@@ -1,5 +1,11 @@
-use crate::{client::ClientCreds, endpoints::Endpoint, error::ApiErrorResponse, utils::{client_login_impl, oauth_request_helper}, Result};
 use super::{ClientFlow, RefreshFlow, TokenResponse};
+use crate::{
+  client::ClientCreds,
+  endpoints::Endpoint,
+  error::ApiErrorResponse,
+  utils::{client_login_impl, oauth_request_helper},
+  Result,
+};
 use std::{collections::HashMap, fmt::Debug, ops::Deref};
 
 #[derive(Debug)]
@@ -17,8 +23,14 @@ pub struct Credentials {
 }
 impl Credentials {
   pub fn new(grant_type: GrantType, client_credentials: ClientCreds, response: TokenResponse) -> Self {
-    let TokenResponse { access_token, user_id, scope, expires_in, refresh_token } = response;
-    
+    let TokenResponse {
+      access_token,
+      user_id,
+      scope,
+      expires_in,
+      refresh_token,
+    } = response;
+
     Self {
       grant_type,
       client_credentials: client_credentials,
@@ -78,12 +90,20 @@ impl RefreshFlow for Credentials {
           return Err(res.json::<ApiErrorResponse>()?.into());
         }
         Ok(())
-      },
+      }
     }
   }
 }
 
 pub struct Token(pub String);
+impl Token {
+  pub fn new(token: String) -> Self {
+    Self(token)
+  }
+  pub fn as_str(&self) -> &str {
+    &self.0
+  }
+}
 impl From<String> for Token {
   fn from(token: String) -> Self {
     Self(token)
@@ -100,14 +120,7 @@ impl Deref for Token {
     &self.0
   }
 }
-impl Token {
-  pub fn new(token: String) -> Self {
-    Self(token)
-  }
-  pub fn as_str(&self) -> &str {
-    &self.0
-  }
-}
+
 
 #[derive(Debug, Clone, Copy)]
 pub enum GrantType {

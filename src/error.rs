@@ -1,6 +1,5 @@
-use serde::Deserialize;
-
 use crate::{auth::AuthError, users::UsersError};
+use serde::Deserialize;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -13,7 +12,6 @@ pub enum Error {
   ApiError(ApiErrorResponse),
   UrlParseError(url::ParseError),
 }
-
 impl From<AuthError> for Error {
   fn from(err: AuthError) -> Self {
     Error::AuthError(err)

@@ -1,8 +1,18 @@
-use std::collections::HashMap;
-
-use crate::{auth::{credentials::GrantType, flows::UserFlowInfo, oauth::pkce, Auth, AuthClient, AuthError, ClientFlow, Credentials, DeviceFlow, TokenResponse, UserFlow}, catalogue::CatalogueClient, endpoints::Endpoint, error::ApiErrorResponse, users::Users, utils::{client_login_impl, get_request_helper, oauth_request_helper, post_request_helper}, Result};
+use crate::{
+  auth::{
+    credentials::GrantType, flows::UserFlowInfo, oauth::pkce, Auth, AuthClient, AuthError, ClientFlow, Credentials, DeviceFlow, TokenResponse,
+    UserFlow,
+  },
+  catalogue::CatalogueClient,
+  endpoints::Endpoint,
+  error::ApiErrorResponse,
+  users::Users,
+  utils::{client_login_impl, get_request_helper, oauth_request_helper, post_request_helper},
+  Result,
+};
 use isocountry::CountryCode;
 use reqwest::blocking::{Client as ReqwestClient, Response};
+use std::collections::HashMap;
 use url::Url;
 
 pub struct Client {
@@ -56,20 +66,21 @@ impl UserFlow for Client {
     let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::Unauthenticated)?;
     let scopes = self.scopes.join(" ");
     let (pkce_challenge, pkce_verifier) = pkce::new_random_sha256();
-    
-    let auth_url = Url::parse_with_params(&Endpoint::LoginAuthorize.to_string(), &[
-      ("response_type", "code"),
-      ("client_id", self.client_credentials.id()),
-      ("redirect_uri", &redirect_uri),
-      ("scope", &scopes),
-      ("code_challenge_method", "S256"),
-      ("code_challenge", &pkce_challenge.as_string()),
-    ])?.to_string();
 
-    Ok(UserFlowInfo {
-      auth_url,
-      pkce_verifier,
-    })
+    let auth_url = Url::parse_with_params(
+      &Endpoint::LoginAuthorize.to_string(),
+      &[
+        ("response_type", "code"),
+        ("client_id", self.client_credentials.id()),
+        ("redirect_uri", &redirect_uri),
+        ("scope", &scopes),
+        ("code_challenge_method", "S256"),
+        ("code_challenge", &pkce_challenge.as_string()),
+      ],
+    )?
+    .to_string();
+
+    Ok(UserFlowInfo { auth_url, pkce_verifier })
   }
 
   fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {
@@ -89,7 +100,7 @@ impl UserFlow for Client {
     let credentials = Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
     self.auth_credentials = Some(credentials);
     Ok(())
-}
+  }
 }
 impl DeviceFlow for Client {
   fn device_login_init(&self) -> Result<crate::auth::flows::DeviceFlowResponse> {
@@ -97,10 +108,7 @@ impl DeviceFlow for Client {
     let endpoint = Endpoint::OAuth2DeviceAuth;
     let client_credentials = &self.client_credentials;
 
-    let params = HashMap::from([
-      ("scope", "r_usr+w_usr+w_sub"),
-      ("client_id", &self.client_credentials.id()),
-    ]);
+    let params = HashMap::from([("scope", "r_usr+w_usr+w_sub"), ("client_id", &self.client_credentials.id())]);
 
     let res = post_request_helper(&client, endpoint, client_credentials).form(&params).send()?;
     Ok(res.json()?)
@@ -132,8 +140,10 @@ impl Users for Client {
     let endpoint = Endpoint::Users(user_id);
     let auth = self.get_credentials()?;
 
-    get_request_helper(&client, endpoint, auth).query(&[("CountryCode", self.country.unwrap().to_string())])
-      .send().map_err(Into::into)
+    get_request_helper(&client, endpoint, auth)
+      .query(&[("CountryCode", self.country.unwrap().to_string())])
+      .send()
+      .map_err(Into::into)
   }
 
   fn get_user_subscription(&self, user_id: &u64) -> Result<Response> {
@@ -141,8 +151,10 @@ impl Users for Client {
     let endpoint = Endpoint::UsersSubscription(user_id);
     let auth = self.get_credentials()?;
 
-    get_request_helper(&client, endpoint, auth).query(&[("CountryCode", self.country.unwrap().to_string())])
-      .send().map_err(Into::into)
+    get_request_helper(&client, endpoint, auth)
+      .query(&[("CountryCode", self.country.unwrap().to_string())])
+      .send()
+      .map_err(Into::into)
   }
 
   fn get_user_clients(&self, user_id: &u64) -> Result<Response> {
@@ -150,12 +162,12 @@ impl Users for Client {
     let endpoint = Endpoint::UsersClients(user_id);
     let auth = self.get_credentials()?;
 
-    get_request_helper(&client, endpoint, auth).query(&[("CountryCode", self.country.unwrap().to_string())])
-      .send().map_err(Into::into)
+    get_request_helper(&client, endpoint, auth)
+      .query(&[("CountryCode", self.country.unwrap().to_string())])
+      .send()
+      .map_err(Into::into)
   }
 }
-
-
 
 #[derive(Clone)]
 pub struct ClientCreds {

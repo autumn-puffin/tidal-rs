@@ -5,7 +5,7 @@ use reqwest::blocking::Response;
 pub trait Users: Auth {
   /// Gets a user by their user_id
   fn get_user(&self, user_id: &u64) -> Result<Response>;
-  /// Get a user's subscription 
+  /// Get a user's subscription
   fn get_user_subscription(&self, user_id: &u64) -> Result<Response>;
   /// Get a user's clients
   fn get_user_clients(&self, user_id: &u64) -> Result<Response>;

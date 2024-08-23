@@ -17,7 +17,7 @@ pub mod base_urls {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum Endpoint<'a> {  
+pub enum Endpoint<'a> {
   OAuth2Token,
   OAuth2DeviceAuth,
   LoginAuthorize,

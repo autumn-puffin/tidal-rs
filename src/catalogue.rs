@@ -1,6 +1,9 @@
 use isocountry::CountryCode;
 
-use crate::{auth::{Auth, Credentials}, client::ClientCreds};
+use crate::{
+  auth::{Auth, Credentials},
+  client::ClientCreds,
+};
 
 pub struct CatalogueClient {
   client_credentials: ClientCreds,

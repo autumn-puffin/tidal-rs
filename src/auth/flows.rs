@@ -1,8 +1,6 @@
-use crate::{Error, Result};
 use super::oauth;
-
+use crate::{Error, Result};
 use serde::Deserialize;
-
 
 pub trait ClientFlow {
   fn client_login(&mut self) -> Result<()>;
@@ -21,15 +19,18 @@ pub trait DeviceFlow {
     let max_retries = response.expires_in / interval;
 
     let mut i: u64 = 0;
-    while i < max_retries { match self.try_device_login_finalize(response) {
-      Err(Error::AuthError(super::AuthError::AuthorizationPending)) => {
+    while i < max_retries {
+      match self.try_device_login_finalize(response) {
+        Err(Error::AuthError(super::AuthError::AuthorizationPending)) => {
           i += 1;
-        std::thread::sleep(std::time::Duration::from_secs(interval));
-      },
-      res => return res,
-    }}
+          std::thread::sleep(std::time::Duration::from_secs(interval));
+        }
+        res => return res,
+      }
+    }
     Err(super::AuthError::MaxRetriesReached)?
-  }}
+  }
+}
 
 pub trait RefreshFlow {
   fn refresh(&mut self) -> Result<()>;

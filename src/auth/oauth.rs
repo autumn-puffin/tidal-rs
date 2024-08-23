@@ -4,9 +4,9 @@ pub mod pkce {
   use sha2::{Digest, Sha256};
 
   #[derive(Debug)]
-  pub struct PkceChallenge (String);
+  pub struct PkceChallenge(String);
   #[derive(Debug)]
-  pub struct PkceVerifier (String);
+  pub struct PkceVerifier(String);
 
   impl PkceChallenge {
     pub fn as_string(&self) -> String {
@@ -18,7 +18,7 @@ pub mod pkce {
       self.0.clone()
     }
   }
-  
+
   impl From<PkceChallenge> for String {
     fn from(challenge: PkceChallenge) -> Self {
       challenge.0
@@ -40,5 +40,4 @@ pub mod pkce {
 
     (PkceChallenge(challenge), PkceVerifier(verifier))
   }
-
 }
