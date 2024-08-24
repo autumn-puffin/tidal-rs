@@ -72,7 +72,7 @@ impl UserFlow for Client {
       &[
         ("response_type", "code"),
         ("client_id", self.client_credentials.id()),
-        ("redirect_uri", &redirect_uri),
+        ("redirect_uri", redirect_uri),
         ("scope", &scopes),
         ("code_challenge_method", "S256"),
         ("code_challenge", &pkce_challenge.as_string()),
@@ -108,7 +108,7 @@ impl DeviceFlow for Client {
     let endpoint = Endpoint::OAuth2DeviceAuth;
     let client_credentials = &self.client_credentials;
 
-    let params = HashMap::from([("scope", "r_usr+w_usr+w_sub"), ("client_id", &self.client_credentials.id())]);
+    let params = HashMap::from([("scope", "r_usr+w_usr+w_sub"), ("client_id", self.client_credentials.id())]);
 
     let res = post_request_helper(&client, endpoint, client_credentials).form(&params).send()?;
     Ok(res.json()?)
