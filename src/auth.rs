@@ -5,6 +5,7 @@ use crate::{
   utils::{client_login_impl, oauth_request_helper, post_request_helper},
   Result,
 };
+use chrono::Utc;
 use credentials::GrantType;
 use flows::{DeviceFlowResponse, UserFlowInfo};
 use reqwest::blocking::Client;
@@ -58,7 +59,7 @@ impl AuthClient {
   pub fn get_credentials(&mut self) -> Result<&Credentials> {
     let credentials = self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?;
     let expire_time = credentials.expires_at();
-    let cur_time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+    let cur_time = Utc::now().timestamp() as u64;
     if expire_time <= cur_time {
       credentials.refresh()?;
     }
@@ -169,7 +170,7 @@ pub trait Auth {
   fn credentials_refresh(&mut self) -> Result<()> {
     let credentials = self.get_credentials_mut()?;
     let expire_time = credentials.expires_at();
-    let cur_time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+    let cur_time = Utc::now().timestamp() as u64;
     if expire_time <= cur_time {
       credentials.refresh()?;
     }

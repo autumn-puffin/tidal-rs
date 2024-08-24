@@ -1,3 +1,5 @@
+use chrono::Utc;
+
 use super::{ClientFlow, RefreshFlow, TokenResponse};
 use crate::{
   client::ClientCreds,
@@ -39,7 +41,7 @@ impl Credentials {
       scope,
       expires_in,
       refresh_token: refresh_token.map(Token::from),
-      received_at: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs(),
+      received_at: Utc::now().timestamp() as u64,
     }
   }
   pub fn expires_at(&self) -> u64 {
