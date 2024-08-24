@@ -25,8 +25,8 @@ pub enum Endpoint<'a> {
   UsersSubscription(&'a u64),
   UsersClients(&'a u64),
 }
-impl Endpoint<'_> {
-  pub fn to_string(&self) -> String {
+impl ToString for Endpoint<'_> {
+  fn to_string(&self) -> String {
     let (base, path) = match self {
       Self::OAuth2Token => (base_urls::AUTH_URL, "oauth2/token".to_owned()),
       Self::OAuth2DeviceAuth => (base_urls::AUTH_URL, "oauth2/device_authorization".to_owned()),
