@@ -83,7 +83,7 @@ impl UserFlow for AuthClient {
     let (pkce_challenge, pkce_verifier) = oauth::pkce::new_random_sha256();
     let auth_url = format!(
       "{}?response_type=code&client_id={}&redirect_uri={}&scope={}&code_challenge_method=S256&code_challenge={}",
-      Endpoint::LoginAuthorize.to_string(),
+      Endpoint::LoginAuthorize,
       self.client_credentials.id(),
       &redirect_uri,
       scopes.join("+"),

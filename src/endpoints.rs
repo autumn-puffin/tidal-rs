@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter};
+
 pub mod base_urls {
   pub use prod::*;
   pub mod prod {
@@ -25,8 +27,8 @@ pub enum Endpoint<'a> {
   UsersSubscription(&'a u64),
   UsersClients(&'a u64),
 }
-impl ToString for Endpoint<'_> {
-  fn to_string(&self) -> String {
+impl Display for Endpoint<'_> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
     let (base, path) = match self {
       Self::OAuth2Token => (base_urls::AUTH_URL, "oauth2/token".to_owned()),
       Self::OAuth2DeviceAuth => (base_urls::AUTH_URL, "oauth2/device_authorization".to_owned()),
@@ -35,6 +37,6 @@ impl ToString for Endpoint<'_> {
       Self::UsersSubscription(id) => (base_urls::API_URL_V1, format!("users/{id}/subscription")),
       Self::UsersClients(id) => (base_urls::API_URL_V1, format!("users/{id}/clients")),
     };
-    format!("{}{}", base, path)
+    write! {f, "{}{}", base, path}
   }
 }
