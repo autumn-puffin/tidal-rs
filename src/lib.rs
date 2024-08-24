@@ -25,6 +25,8 @@ pub mod users;
 
 pub mod endpoints;
 
+pub mod api;
+
 pub(crate) mod utils;
 
 pub mod error;

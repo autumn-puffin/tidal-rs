@@ -1165,6 +1165,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_flat_path"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b519508a678debace0e26de32f70c25918fc4fde390d10e582f2b4780e7ef5e4"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "serde_json"
 version = "1.0.121"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1345,6 +1356,7 @@ dependencies = [
  "rand",
  "reqwest 0.12.5",
  "serde",
+ "serde_flat_path",
  "sha2",
  "url",
 ]

@@ -18,12 +18,12 @@ fn main() {
   client.device_login_finalize(&dev_res).unwrap();
   println!("Logged in as: {:?}\n", client.get_credentials().unwrap().user_id());
 
-  let user_res = client.get_current_user().unwrap();
-  println!("User Info: {}\n", user_res.text().unwrap());
+  let user = client.get_current_user().unwrap();
+  println!("User Info: {:#?}\n", user);
 
-  let sub_res = client.get_current_user_subscription().unwrap();
-  println!("User Subscription: {}\n", sub_res.text().unwrap());
+  let sub = client.get_current_user_subscription().unwrap();
+  println!("User Subscription: {:#?}\n", sub);
 
   let clients_res = client.get_current_user_clients().unwrap();
-  println!("User Clients: {}\n", clients_res.text().unwrap());
+  println!("User Clients: {:#?}\n", clients_res);
 }

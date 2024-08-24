@@ -1,4 +1,5 @@
 use crate::{
+  api::{PagingResponse, User, UserClient, UserSubscription},
   auth::{
     credentials::GrantType, flows::UserFlowInfo, oauth::pkce, Auth, AuthClient, AuthError, ClientFlow, Credentials, DeviceFlow, TokenResponse,
     UserFlow,
@@ -11,7 +12,7 @@ use crate::{
   Result,
 };
 use isocountry::CountryCode;
-use reqwest::blocking::{Client as ReqwestClient, Response};
+use reqwest::blocking::Client as ReqwestClient;
 use std::collections::HashMap;
 use url::Url;
 
@@ -135,37 +136,37 @@ impl DeviceFlow for Client {
 }
 
 impl Users for Client {
-  fn get_user(&self, user_id: &u64) -> Result<Response> {
+  fn get_user(&self, user_id: &u64) -> Result<User> {
     let client = ReqwestClient::new();
     let endpoint = Endpoint::Users(user_id);
     let auth = self.get_credentials()?;
 
-    get_request_helper(&client, endpoint, auth)
+    let res = get_request_helper(&client, endpoint, auth)
       .query(&[("CountryCode", self.country.unwrap().to_string())])
-      .send()
-      .map_err(Into::into)
+      .send()?;
+    Ok(res.json()?)
   }
 
-  fn get_user_subscription(&self, user_id: &u64) -> Result<Response> {
+  fn get_user_subscription(&self, user_id: &u64) -> Result<UserSubscription> {
     let client = ReqwestClient::new();
     let endpoint = Endpoint::UsersSubscription(user_id);
     let auth = self.get_credentials()?;
 
-    get_request_helper(&client, endpoint, auth)
+    let res = get_request_helper(&client, endpoint, auth)
       .query(&[("CountryCode", self.country.unwrap().to_string())])
-      .send()
-      .map_err(Into::into)
+      .send()?;
+    Ok(res.json()?)
   }
 
-  fn get_user_clients(&self, user_id: &u64) -> Result<Response> {
+  fn get_user_clients(&self, user_id: &u64) -> Result<PagingResponse<UserClient>> {
     let client = ReqwestClient::new();
     let endpoint = Endpoint::UsersClients(user_id);
     let auth = self.get_credentials()?;
 
-    get_request_helper(&client, endpoint, auth)
+    let res = get_request_helper(&client, endpoint, auth)
       .query(&[("CountryCode", self.country.unwrap().to_string())])
-      .send()
-      .map_err(Into::into)
+      .send()?;
+    Ok(res.json()?)
   }
 }
 
