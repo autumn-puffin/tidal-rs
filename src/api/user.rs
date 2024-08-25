@@ -49,7 +49,6 @@ struct Subscription {
   offline_grace_period: u64,
 }
 
-//{"limit":10,"offset":0,"totalNumberOfItems":2,"items":[{"id":496267582,"name":"Google Pixel 6 Pro","application":{"name":"TIDAL_Android_2.87.0","type":{"name":"AndroidWithBasic"},"service":"TIDAL"},"uniqueKey":"426873ee1f974e54","authorizedForOffline":true,"authorizedForOfflineDate":"2023-01-27T00:35:48.291+0000","lastLogin":"2024-04-13T15:48:40.711+0000","created":"2022-08-19T11:44:48.620+0000","numberOfOfflineAlbums":3,"numberOfOfflinePlaylists":0},{"id":552175926,"name":"Google Pixel 6 Pro","application":{"name":"TIDAL_Android_2.123.0","type":{"name":"AndroidWithBasic"},"service":"TIDAL"},"uniqueKey":"1407211b698380da","authorizedForOffline":true,"authorizedForOfflineDate":"2024-07-21T06:17:13.253+0000","lastLogin":"2024-07-28T13:23:40.922+0000","created":"2024-07-12T15:41:20.915+0000","numberOfOfflineAlbums":0,"numberOfOfflinePlaylists":0}]}
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserClient {

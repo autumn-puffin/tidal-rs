@@ -33,3 +33,37 @@ pub enum PaymentType {
   Venmo,
   Vivo,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ModuleType {
+  AlbumHeader,
+  AlbumItems,
+  AlbumList,
+  ArticleList,
+  ArtistHeader,
+  ArtistList,
+  ContributorHeader,
+  FeaturedPromotions,
+  GenreHeader,
+  HighlightModule,
+  LiveSessionList,
+  MixHeader,
+  MixList,
+  MixedTypesList,
+  MultipleTopPromotions,
+  PageLinks,
+  PageLinksCloud,
+  PageLinksImage,
+  PlaylistList,
+  Radio,
+  SingleTopPromotion,
+  Store,
+  TaskList,
+  TextBlock,
+  Ticketmaster,
+  TrackList,
+  Social,
+  VideoList,
+  ItemListWithRoles,
+}
