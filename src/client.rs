@@ -1,8 +1,8 @@
 use crate::{
   api::{PagingResponse, User, UserClient, UserSubscription},
   auth::{
-    credentials::GrantType, flows::UserFlowInfo, oauth::pkce, Auth, AuthClient, AuthError, ClientFlow, Credentials, DeviceFlow, TokenResponse,
-    UserFlow,
+    credentials::GrantType, flows::UserFlowInfo, oauth::pkce, Auth, AuthClient, AuthError, ClientFlow, Credentials, DeviceFlow, RefreshFlow,
+    TokenResponse, UserFlow,
   },
   catalogue::CatalogueClient,
   endpoints::Endpoint,
@@ -132,6 +132,11 @@ impl DeviceFlow for Client {
       return Err(res.json::<ApiErrorResponse>()?.into());
     }
     Ok(())
+  }
+}
+impl RefreshFlow for Client {
+  fn refresh(&mut self) -> Result<()> {
+    self.auth_credentials.as_mut().ok_or(AuthError::Unauthenticated)?.refresh()
   }
 }
 
