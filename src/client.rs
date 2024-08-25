@@ -1,10 +1,10 @@
 use crate::{
-  api::{Paging, User, UserClient, UserSubscription},
+  api::{Page, Paging, User, UserClient, UserSubscription},
   auth::{
     credentials::GrantType, flows::UserFlowInfo, oauth::pkce, Auth, AuthClient, AuthError, ClientFlow, Credentials, DeviceFlow, RefreshFlow,
     TokenResponse, UserFlow,
   },
-  catalogue::CatalogueClient,
+  catalogue::{Catalogue, CatalogueClient},
   endpoints::Endpoint,
   error::ApiErrorResponse,
   users::Users,
@@ -139,7 +139,6 @@ impl RefreshFlow for Client {
     self.auth_credentials.as_mut().ok_or(AuthError::Unauthenticated)?.refresh()
   }
 }
-
 impl Users for Client {
   fn get_user(&self, user_id: &u64) -> Result<User> {
     let client = ReqwestClient::new();
@@ -170,6 +169,22 @@ impl Users for Client {
 
     let res = get_request_helper(&client, endpoint, auth)
       .query(&[("CountryCode", self.country.unwrap().to_string())])
+      .send()?;
+    Ok(res.json()?)
+  }
+}
+impl Catalogue for Client {
+  fn get_country(&self) -> Result<&CountryCode> {
+    self.country.as_ref().ok_or(AuthError::Unauthenticated.into())
+  }
+
+  fn get_page(&self, page: &str) -> Result<Page> {
+    let client = ReqwestClient::new();
+    let endpoint = Endpoint::Pages(page);
+    let auth = self.get_credentials()?;
+
+    let res = get_request_helper(&client, endpoint, auth)
+      .query(&[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")])
       .send()?;
     Ok(res.json()?)
   }
