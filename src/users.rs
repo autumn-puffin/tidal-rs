@@ -1,5 +1,5 @@
 use crate::{
-  api::{PagingResponse, User, UserClient, UserSubscription},
+  api::{Paging, User, UserClient, UserSubscription},
   auth::Auth,
   Result,
 };
@@ -11,7 +11,7 @@ pub trait Users: Auth {
   /// Get a user's subscription
   fn get_user_subscription(&self, user_id: &u64) -> Result<UserSubscription>;
   /// Get a user's clients
-  fn get_user_clients(&self, user_id: &u64) -> Result<PagingResponse<UserClient>>;
+  fn get_user_clients(&self, user_id: &u64) -> Result<Paging<UserClient>>;
 
   /// Get the current user
   fn get_current_user(&self) -> Result<User> {
@@ -24,7 +24,7 @@ pub trait Users: Auth {
     self.get_user_subscription(credentials.user_id().ok_or(UsersError::NoCurrentUser)?)
   }
   /// Get the current user's clients
-  fn get_current_user_clients(&self) -> Result<PagingResponse<UserClient>> {
+  fn get_current_user_clients(&self) -> Result<Paging<UserClient>> {
     let credentials = self.get_credentials()?;
     self.get_user_clients(credentials.user_id().ok_or(UsersError::NoCurrentUser)?)
   }

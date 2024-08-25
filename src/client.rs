@@ -1,5 +1,5 @@
 use crate::{
-  api::{PagingResponse, User, UserClient, UserSubscription},
+  api::{Paging, User, UserClient, UserSubscription},
   auth::{
     credentials::GrantType, flows::UserFlowInfo, oauth::pkce, Auth, AuthClient, AuthError, ClientFlow, Credentials, DeviceFlow, RefreshFlow,
     TokenResponse, UserFlow,
@@ -163,7 +163,7 @@ impl Users for Client {
     Ok(res.json()?)
   }
 
-  fn get_user_clients(&self, user_id: &u64) -> Result<PagingResponse<UserClient>> {
+  fn get_user_clients(&self, user_id: &u64) -> Result<Paging<UserClient>> {
     let client = ReqwestClient::new();
     let endpoint = Endpoint::UsersClients(user_id);
     let auth = self.get_credentials()?;
