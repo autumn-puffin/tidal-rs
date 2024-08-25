@@ -47,6 +47,17 @@ impl Client {
   pub fn set_country(&mut self, country: CountryCode) {
     self.country = Some(country);
   }
+
+  fn get_page_response(&self, page: &str) -> Result<Response> {
+    let client = ReqwestClient::new();
+    let endpoint = Endpoint::Pages(page);
+    let auth = self.get_credentials()?;
+
+    get_request_helper(&client, endpoint, auth)
+      .query(&[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")])
+      .send()
+      .map_err(Into::into)
+  }
 }
 impl Auth for Client {
   fn get_credentials(&self) -> Result<&Credentials> {
@@ -184,13 +195,7 @@ impl Catalogue for Client {
   }
 
   fn get_page(&self, page: &str) -> Result<Page> {
-    let client = ReqwestClient::new();
-    let endpoint = Endpoint::Pages(page);
-    let auth = self.get_credentials()?;
-
-    let res = get_request_helper(&client, endpoint, auth)
-      .query(&[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")])
-      .send()?;
+    let res = self.get_page_response(page)?;
     Ok(res.json()?)
   }
 }
