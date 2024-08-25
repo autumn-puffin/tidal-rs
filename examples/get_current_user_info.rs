@@ -10,7 +10,6 @@ fn get_client() -> Client {
 }
 
 fn auth(client: &mut Client) {
-  client.set_country(isocountry::CountryCode::AUS);
   let dev_res = client.device_login_init().unwrap();
   println!("Please Go To https://{}\n", dev_res.verification_uri_complete);
   client.device_login_finalize(&dev_res).unwrap();

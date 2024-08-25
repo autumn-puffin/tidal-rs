@@ -1,6 +1,7 @@
 use chrono::Utc;
+use isocountry::CountryCode;
 
-use super::{ClientFlow, RefreshFlow, TokenResponse};
+use super::{AuthUser, ClientFlow, RefreshFlow, TokenResponse};
 use crate::{
   client::ClientCreds,
   endpoints::Endpoint,
@@ -20,6 +21,7 @@ pub struct Credentials {
   expires_in: u64,
   refresh_token: Option<Token>,
   user_id: Option<u64>,
+  user: Option<AuthUser>,
 
   received_at: u64,
 }
@@ -28,6 +30,7 @@ impl Credentials {
     let TokenResponse {
       access_token,
       user_id,
+      user,
       scope,
       expires_in,
       refresh_token,
@@ -38,11 +41,15 @@ impl Credentials {
       client_credentials,
       access_token: access_token.into(),
       user_id,
+      user,
       scope,
       expires_in,
       refresh_token: refresh_token.map(Token::from),
       received_at: Utc::now().timestamp() as u64,
     }
+  }
+  pub fn country_code(&self) -> Option<&CountryCode> {
+    Some(&self.user.as_ref()?.country_code)
   }
   pub fn expires_at(&self) -> u64 {
     self.received_at + self.expires_in
@@ -55,6 +62,9 @@ impl Credentials {
   }
   pub fn user_id(&self) -> Option<&u64> {
     self.user_id.as_ref()
+  }
+  pub fn auth_user(&self) -> Option<&AuthUser> {
+    self.user.as_ref()
   }
   pub fn grant_type(&self) -> &GrantType {
     &self.grant_type

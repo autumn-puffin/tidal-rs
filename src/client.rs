@@ -12,7 +12,7 @@ use crate::{
   Result,
 };
 use isocountry::CountryCode;
-use reqwest::blocking::Client as ReqwestClient;
+use reqwest::blocking::{Client as ReqwestClient, Response};
 use std::collections::HashMap;
 use url::Url;
 
@@ -96,9 +96,13 @@ impl UserFlow for Client {
       ("redirect_uri", redirect_uri),
       ("code_verifier", &verifier),
     ]);
-
     let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
+    if !res.status().is_success() {
+      return Err(res.json::<ApiErrorResponse>()?.into());
+    }
+
     let credentials = Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
+    self.country = credentials.auth_user().map(|user| user.country_code);
     self.auth_credentials = Some(credentials);
     Ok(())
   }
@@ -125,12 +129,13 @@ impl DeviceFlow for Client {
       ("device_code", &response.device_code),
     ]);
     let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
-
-    if res.status().is_success() {
-      self.auth_credentials = Some(Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?));
-    } else {
+    if !res.status().is_success() {
       return Err(res.json::<ApiErrorResponse>()?.into());
     }
+
+    let credentials = Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
+    self.country = credentials.auth_user().map(|user| user.country_code);
+    self.auth_credentials = Some(credentials);
     Ok(())
   }
 }
