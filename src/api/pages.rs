@@ -1,5 +1,7 @@
-use super::{ModuleType, PagingList};
 use serde::{Deserialize, Serialize};
+
+pub mod modules;
+use modules::ModuleType;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -22,16 +24,23 @@ pub struct PageRow {
   pub unserialized: std::collections::HashMap<String, serde_json::Value>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(default)]
 pub struct PageModule {
   pub id: String,
-  #[serde(rename = "type")]
-  pub module_type: ModuleType,
+  #[serde(flatten)]
+  pub r#type: ModuleType,
   pub width: u64,
-  pub title: String,
-  pub description: String,
+  pub title: Option<String>,
   pub pre_title: Option<String>,
+  pub description: Option<String>,
+  pub quick_play: bool,
+  pub scroll: Option<String>,
+  pub self_link: Option<String>,
+  pub show_more: Option<ShowMore>,
+  // pub paged_list: Option<PagingList<PageItem>>,
+  // pub lines: Option<u64>,
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
   pub unserialized: std::collections::HashMap<String, serde_json::Value>,
@@ -39,10 +48,17 @@ pub struct PageModule {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct PageItem {
+pub struct ShowMore {
   pub title: String,
-  pub icon: Option<String>,
   pub api_path: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PageItem {
+  pub title: Option<String>,
+  pub icon: Option<String>,
+  pub api_path: Option<String>,
   pub image_id: Option<String>,
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
