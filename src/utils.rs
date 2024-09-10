@@ -1,26 +1,29 @@
 use crate::{
-  auth::{credentials::GrantType, Credentials, TokenResponse},
+  client::auth::{AuthCreds, GrantType, TokenResponse},
   client::ClientCreds,
   endpoints::Endpoint,
   Result,
 };
+use base64::prelude::*;
+use rand::{thread_rng, Rng};
 use reqwest::{
   blocking::{Client, RequestBuilder},
   Method,
 };
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 
 pub enum RequestAuth<'a> {
   Basic(&'a ClientCreds),
-  Bearer(&'a Credentials),
+  Bearer(&'a AuthCreds),
 }
 impl<'a> From<&'a ClientCreds> for RequestAuth<'a> {
   fn from(creds: &'a ClientCreds) -> Self {
     RequestAuth::Basic(creds)
   }
 }
-impl<'a> From<&'a Credentials> for RequestAuth<'a> {
-  fn from(creds: &'a Credentials) -> Self {
+impl<'a> From<&'a AuthCreds> for RequestAuth<'a> {
+  fn from(creds: &'a AuthCreds) -> Self {
     RequestAuth::Bearer(creds)
   }
 }
@@ -55,11 +58,22 @@ pub fn oauth_request_helper<'a>(
   builder
 }
 
-pub fn client_login_impl(client_credentials: &ClientCreds) -> Result<Credentials> {
+pub fn client_login_impl(client_credentials: &ClientCreds) -> Result<AuthCreds> {
   let endpoint = Endpoint::OAuth2Token;
   let grant = GrantType::ClientCredentials;
 
   let res = oauth_request_helper(endpoint, grant, client_credentials, None).send()?;
 
-  Ok(Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?))
+  Ok(AuthCreds::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?))
+}
+
+/// Generate a new PKCE pair (challenge, verifier)
+pub fn new_pkce_pair() -> (String, String) {
+  let random: Vec<u8> = (0..32).map(|_| thread_rng().gen::<u8>()).collect();
+  let verifier = BASE64_URL_SAFE_NO_PAD.encode(random);
+
+  let digest = Sha256::digest(verifier.as_bytes());
+  let challenge = BASE64_URL_SAFE_NO_PAD.encode(digest);
+
+  (challenge, verifier)
 }

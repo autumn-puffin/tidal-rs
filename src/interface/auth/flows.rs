@@ -1,4 +1,3 @@
-use super::oauth;
 use crate::{Error, Result};
 use serde::Deserialize;
 
@@ -39,7 +38,7 @@ pub trait RefreshFlow {
 #[derive(Debug)]
 pub struct UserFlowInfo {
   pub auth_url: String,
-  pub pkce_verifier: oauth::pkce::PkceVerifier,
+  pub pkce_verifier: String,
 }
 
 #[derive(Debug, Deserialize)]

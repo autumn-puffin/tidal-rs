@@ -1,23 +1,21 @@
+//! Authentication interface for the TIDAL API
+
+pub use crate::interface::auth::{flows::*, *};
 use crate::{
   client::ClientCreds,
   endpoints::Endpoint,
   error::ApiErrorResponse,
-  utils::{client_login_impl, oauth_request_helper, post_request_helper},
+  utils::{self, client_login_impl, oauth_request_helper, post_request_helper},
   Result,
 };
 use chrono::Utc;
-use credentials::GrantType;
-use flows::{DeviceFlowResponse, UserFlowInfo};
 use isocountry::CountryCode;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Debug};
 
-pub mod flows;
-pub use flows::{ClientFlow, DeviceFlow, RefreshFlow, UserFlow};
 pub mod credentials;
-pub use credentials::Credentials;
-pub(crate) mod oauth;
+pub use credentials::AuthCreds;
 
 #[derive(Serialize, Deserialize)]
 pub struct TokenResponse {
@@ -78,7 +76,7 @@ pub struct AuthClient {
   /// Authorisation Configuration
   redirect_uri: Option<String>,
   /// Credentials for the current session
-  credentials: Option<Credentials>,
+  credentials: Option<AuthCreds>,
 }
 impl AuthClient {
   pub fn new(client_credentials: ClientCreds) -> Self {
@@ -89,7 +87,7 @@ impl AuthClient {
     }
   }
 
-  pub fn get_credentials(&mut self) -> Result<&Credentials> {
+  pub fn get_credentials(&mut self) -> Result<&AuthCreds> {
     let credentials = self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?;
     let expire_time = credentials.expires_at();
     let cur_time = Utc::now().timestamp() as u64;
@@ -114,14 +112,14 @@ impl UserFlow for AuthClient {
     let redirect_uri = self.redirect_uri.as_deref().ok_or(AuthError::MissingRedirectUri)?;
     let scopes = ["user.read".to_string()]; // TODO: make this configurable
 
-    let (pkce_challenge, pkce_verifier) = oauth::pkce::new_random_sha256();
+    let (pkce_challenge, pkce_verifier) = utils::new_pkce_pair();
     let auth_url = format!(
       "{}?response_type=code&client_id={}&redirect_uri={}&scope={}&code_challenge_method=S256&code_challenge={}",
       Endpoint::LoginAuthorize,
       self.client_credentials.id(),
       &redirect_uri,
       scopes.join("+"),
-      pkce_challenge.as_string()
+      pkce_challenge
     );
 
     Ok(UserFlowInfo { auth_url, pkce_verifier })
@@ -132,7 +130,7 @@ impl UserFlow for AuthClient {
     let client_credentials = &self.client_credentials;
 
     let redirect_uri = self.redirect_uri.as_deref().ok_or(AuthError::MissingRedirectUri)?;
-    let verifier = info.pkce_verifier.as_string();
+    let verifier = info.pkce_verifier;
 
     let mut params = HashMap::new();
     params.insert("client_id", self.client_credentials.id());
@@ -142,7 +140,7 @@ impl UserFlow for AuthClient {
 
     let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
 
-    let credentials = Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
+    let credentials = AuthCreds::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
     self.credentials = Some(credentials);
     Ok(())
   }
@@ -174,7 +172,7 @@ impl DeviceFlow for AuthClient {
     let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
 
     if res.status().is_success() {
-      let credentials = Credentials::new(GrantType::DeviceCode, client_credentials.clone(), res.json::<TokenResponse>()?);
+      let credentials = AuthCreds::new(GrantType::DeviceCode, client_credentials.clone(), res.json::<TokenResponse>()?);
       self.credentials = Some(credentials);
       Ok(())
     } else {
@@ -186,38 +184,4 @@ impl RefreshFlow for AuthClient {
   fn refresh(&mut self) -> Result<()> {
     self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?.refresh()
   }
-}
-
-pub trait Auth {
-  fn get_credentials(&self) -> Result<&Credentials>;
-  fn get_credentials_mut(&mut self) -> Result<&mut Credentials>;
-
-  fn get_credentials_refresh(&mut self) -> Result<&Credentials> {
-    self.credentials_refresh()?;
-    self.get_credentials()
-  }
-  fn get_credentials_force_refresh(&mut self) -> Result<&Credentials> {
-    self.credentials_force_refresh()?;
-    self.get_credentials()
-  }
-  fn credentials_refresh(&mut self) -> Result<()> {
-    let credentials = self.get_credentials_mut()?;
-    let expire_time = credentials.expires_at();
-    let cur_time = Utc::now().timestamp() as u64;
-    if expire_time <= cur_time {
-      credentials.refresh()?;
-    }
-    Ok(())
-  }
-  fn credentials_force_refresh(&mut self) -> Result<()> {
-    self.get_credentials_mut()?.refresh()
-  }
-}
-
-#[derive(Debug)]
-pub enum AuthError {
-  AuthorizationPending,
-  MissingRedirectUri,
-  MaxRetriesReached,
-  Unauthenticated,
 }

@@ -1,6 +1,6 @@
 use crate::{
-  auth::{AuthClient, ClientFlow, DeviceFlow, UserFlow},
-  client::ClientCreds,
+  client::{auth::AuthClient, ClientCreds},
+  interface::auth::*,
 };
 use dotenvy_macro::dotenv;
 use reqwest::Url;

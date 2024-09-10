@@ -11,21 +11,17 @@
 //! `Catalogue` trait and provides access to the Tidal catalogue, such as searching for tracks,
 //! albums, and artists.
 
-/// Module for the Tidal API client
+/// TIDAL-rs' client implementations
 pub mod client;
 
-/// Module for authentication and credentials
-pub mod auth;
-
-/// Module for accessing and searching the Tidal catalog
-pub mod catalogue;
-
-/// Module for user related api functions
-pub mod users;
-
-pub mod endpoints;
-
+/// TIDAL api model
 pub mod api;
+
+/// TIDAL api interfaces
+pub mod interface;
+
+/// TIDAL api endpoints
+pub mod endpoints;
 
 pub(crate) mod utils;
 

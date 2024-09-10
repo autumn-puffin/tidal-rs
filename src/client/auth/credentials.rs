@@ -1,18 +1,19 @@
 use chrono::Utc;
 use isocountry::CountryCode;
 
-use super::{AuthUser, ClientFlow, RefreshFlow, TokenResponse};
+use super::{AuthUser, TokenResponse};
 use crate::{
   client::ClientCreds,
   endpoints::Endpoint,
   error::ApiErrorResponse,
+  interface::auth::{flows::*, *},
   utils::{client_login_impl, oauth_request_helper},
   Result,
 };
 use std::{collections::HashMap, fmt::Debug, ops::Deref};
 
 #[derive(Debug)]
-pub struct Credentials {
+pub struct AuthCreds {
   client_credentials: ClientCreds,
   grant_type: GrantType,
 
@@ -25,7 +26,7 @@ pub struct Credentials {
 
   received_at: u64,
 }
-impl Credentials {
+impl AuthCreds {
   pub fn new(grant_type: GrantType, client_credentials: ClientCreds, response: TokenResponse) -> Self {
     let TokenResponse {
       access_token,
@@ -76,13 +77,24 @@ impl Credentials {
     &self.scope
   }
 }
-impl ClientFlow for Credentials {
+impl Credentials for AuthCreds {
+  fn expires_at(&self) -> u64 {
+    AuthCreds::expires_at(self)
+  }
+  fn country_code(&self) -> Option<&CountryCode> {
+    AuthCreds::country_code(self)
+  }
+  fn user_id(&self) -> Option<&u64> {
+    AuthCreds::user_id(self)
+  }
+}
+impl ClientFlow for AuthCreds {
   fn client_login(&mut self) -> Result<()> {
     *self = client_login_impl(self.client_credentials())?;
     Ok(())
   }
 }
-impl RefreshFlow for Credentials {
+impl RefreshFlow for AuthCreds {
   fn refresh(&mut self) -> Result<()> {
     match self.grant_type() {
       GrantType::ClientCredentials => self.client_login(),
@@ -97,7 +109,7 @@ impl RefreshFlow for Credentials {
 
         let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
         if res.status().is_success() {
-          *self = Credentials::new(GrantType::RefreshToken, client_credentials.clone(), res.json::<TokenResponse>()?);
+          *self = AuthCreds::new(GrantType::RefreshToken, client_credentials.clone(), res.json::<TokenResponse>()?);
         } else {
           return Err(res.json::<ApiErrorResponse>()?.into());
         }
@@ -130,23 +142,5 @@ impl Deref for Token {
   type Target = str;
   fn deref(&self) -> &Self::Target {
     &self.0
-  }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum GrantType {
-  ClientCredentials,
-  AuthorizationCode,
-  DeviceCode,
-  RefreshToken,
-}
-impl GrantType {
-  pub fn as_str(&self) -> &str {
-    match self {
-      Self::ClientCredentials => "client_credentials",
-      Self::AuthorizationCode => "authorization_code",
-      Self::DeviceCode => "urn:ietf:params:oauth:grant-type:device_code",
-      Self::RefreshToken => "refresh_token",
-    }
   }
 }

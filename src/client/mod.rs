@@ -1,14 +1,18 @@
+//! TIDAL-rs' main client implementation for the Tidal API, implimenting all of the available interfaces.
+//!
+//! The `Client` struct is a basic all-inclusive blocking client for the tidal API, there are also
+//! standalone clients for individual parts of the API, such as the `AuthClient`, and the `CatalogueClient`
+
+pub use crate::interface::{
+  auth::{flows::*, *},
+  catalogue::*,
+  users::*,
+};
 use crate::{
   api::{Page, Paging, User, UserClient, UserSubscription},
-  auth::{
-    credentials::GrantType, flows::UserFlowInfo, oauth::pkce, Auth, AuthClient, AuthError, ClientFlow, Credentials, DeviceFlow, RefreshFlow,
-    TokenResponse, UserFlow,
-  },
-  catalogue::{Catalogue, CatalogueClient},
   endpoints::Endpoint,
   error::ApiErrorResponse,
-  users::Users,
-  utils::{client_login_impl, get_request_helper, oauth_request_helper, post_request_helper},
+  utils::{self, client_login_impl, get_request_helper, oauth_request_helper, post_request_helper},
   Result,
 };
 use isocountry::CountryCode;
@@ -16,9 +20,18 @@ use reqwest::blocking::{Client as ReqwestClient, Response};
 use std::collections::HashMap;
 use url::Url;
 
+/// Standalone auth client implimentation
+pub mod auth;
+use auth::{AuthClient, AuthCreds, TokenResponse};
+
+/// Standalone catalogue client implimentation
+pub mod catalogue;
+use catalogue::CatalogueClient;
+
+/// A client for interacting with the Tidal API, implimenting all of the available interfaces.
 pub struct Client {
   client_credentials: ClientCreds,
-  auth_credentials: Option<Credentials>,
+  auth_credentials: Option<AuthCreds>,
   scopes: Vec<String>,
   redirect_uri: Option<String>,
   country: Option<CountryCode>,
@@ -60,10 +73,11 @@ impl Client {
   }
 }
 impl Auth for Client {
-  fn get_credentials(&self) -> Result<&Credentials> {
+  type Credentials = AuthCreds;
+  fn get_credentials(&self) -> Result<&AuthCreds> {
     self.auth_credentials.as_ref().ok_or(AuthError::Unauthenticated.into())
   }
-  fn get_credentials_mut(&mut self) -> Result<&mut Credentials> {
+  fn get_credentials_mut(&mut self) -> Result<&mut AuthCreds> {
     self.auth_credentials.as_mut().ok_or(AuthError::Unauthenticated.into())
   }
 }
@@ -77,7 +91,7 @@ impl UserFlow for Client {
   fn user_login_init(&self) -> Result<UserFlowInfo> {
     let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::Unauthenticated)?;
     let scopes = self.scopes.join(" ");
-    let (pkce_challenge, pkce_verifier) = pkce::new_random_sha256();
+    let (pkce_challenge, pkce_verifier) = utils::new_pkce_pair();
 
     let auth_url = Url::parse_with_params(
       &Endpoint::LoginAuthorize.to_string(),
@@ -87,7 +101,7 @@ impl UserFlow for Client {
         ("redirect_uri", redirect_uri),
         ("scope", &scopes),
         ("code_challenge_method", "S256"),
-        ("code_challenge", &pkce_challenge.as_string()),
+        ("code_challenge", &pkce_challenge),
       ],
     )?
     .to_string();
@@ -100,7 +114,7 @@ impl UserFlow for Client {
     let grant = GrantType::AuthorizationCode;
     let client_credentials = &self.client_credentials;
     let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::MissingRedirectUri)?;
-    let verifier = info.pkce_verifier.as_string();
+    let verifier = info.pkce_verifier;
     let params = HashMap::from([
       ("client_id", self.client_credentials.id()),
       ("code", &code),
@@ -112,14 +126,14 @@ impl UserFlow for Client {
       return Err(res.json::<ApiErrorResponse>()?.into());
     }
 
-    let credentials = Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
+    let credentials = AuthCreds::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
     self.country = credentials.auth_user().map(|user| user.country_code);
     self.auth_credentials = Some(credentials);
     Ok(())
   }
 }
 impl DeviceFlow for Client {
-  fn device_login_init(&self) -> Result<crate::auth::flows::DeviceFlowResponse> {
+  fn device_login_init(&self) -> Result<crate::interface::auth::flows::DeviceFlowResponse> {
     let client = ReqwestClient::new();
     let endpoint = Endpoint::OAuth2DeviceAuth;
     let client_credentials = &self.client_credentials;
@@ -130,7 +144,7 @@ impl DeviceFlow for Client {
     Ok(res.json()?)
   }
 
-  fn try_device_login_finalize(&mut self, response: &crate::auth::flows::DeviceFlowResponse) -> Result<()> {
+  fn try_device_login_finalize(&mut self, response: &crate::interface::auth::flows::DeviceFlowResponse) -> Result<()> {
     let endpoint = Endpoint::OAuth2Token;
     let grant = GrantType::DeviceCode;
     let client_credentials = &self.client_credentials;
@@ -144,7 +158,7 @@ impl DeviceFlow for Client {
       return Err(res.json::<ApiErrorResponse>()?.into());
     }
 
-    let credentials = Credentials::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
+    let credentials = AuthCreds::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
     self.country = credentials.auth_user().map(|user| user.country_code);
     self.auth_credentials = Some(credentials);
     Ok(())
@@ -200,6 +214,7 @@ impl Catalogue for Client {
   }
 }
 
+/// A simple struct for storing client credentials, with a custom Debug impl that redacts the client secret.
 #[derive(Clone)]
 pub struct ClientCreds {
   client_id: String,

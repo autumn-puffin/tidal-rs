@@ -1,6 +1,6 @@
 use crate::{
   api::{Paging, User, UserClient, UserSubscription},
-  auth::Auth,
+  interface::auth::{Auth, Credentials as _},
   Result,
 };
 

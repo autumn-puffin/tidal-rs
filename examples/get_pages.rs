@@ -1,8 +1,7 @@
 use dotenvy_macro::dotenv;
 use tidal_rs::{
-  auth::{Auth as _, DeviceFlow as _},
-  catalogue::Catalogue,
   client::{Client, ClientCreds},
+  interface::{auth::*, catalogue::*},
 };
 
 fn get_client() -> Client {

@@ -1,4 +1,4 @@
-use crate::{auth::AuthError, users::UsersError};
+use crate::interface::{auth::AuthError, users::UsersError};
 use serde::Deserialize;
 
 pub type Result<T> = std::result::Result<T, Error>;
