@@ -6,3 +6,5 @@ pub mod user;
 pub use user::*;
 pub mod pages;
 pub use pages::*;
+pub mod media;
+pub use media::*;
