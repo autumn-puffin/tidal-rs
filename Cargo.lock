@@ -1357,6 +1357,7 @@ dependencies = [
  "reqwest 0.12.5",
  "serde",
  "serde_flat_path",
+ "serde_json",
  "sha2",
  "url",
 ]

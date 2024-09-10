@@ -8,12 +8,18 @@ pub struct Page {
   pub id: String,
   pub title: String,
   pub rows: Vec<PageRow>,
+  #[cfg(feature = "show_unmodeled")]
+  #[serde(flatten)]
+  pub unserialized: std::collections::HashMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PageRow {
   pub modules: Vec<PageModule>,
+  #[cfg(feature = "show_unmodeled")]
+  #[serde(flatten)]
+  pub unserialized: std::collections::HashMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -26,9 +32,9 @@ pub struct PageModule {
   pub title: String,
   pub description: String,
   pub pre_title: Option<String>,
-  pub show_more: Option<PageItem>,
-  pub paged_list: Option<PagingList<PageItem>>,
-  pub lines: Option<u64>,
+  #[cfg(feature = "show_unmodeled")]
+  #[serde(flatten)]
+  pub unserialized: std::collections::HashMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,4 +44,7 @@ pub struct PageItem {
   pub icon: Option<String>,
   pub api_path: String,
   pub image_id: Option<String>,
+  #[cfg(feature = "show_unmodeled")]
+  #[serde(flatten)]
+  pub unserialized: std::collections::HashMap<String, serde_json::Value>,
 }
