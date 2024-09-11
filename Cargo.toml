@@ -20,6 +20,8 @@ chrono = "0.4"
 
 [dev-dependencies]
 dotenvy_macro = "0.15"
+serde_path_to_error = "0.1"
+
 
 [features]
 default = ["show_unmodeled"]

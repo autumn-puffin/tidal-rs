@@ -1,8 +1,18 @@
 use tidal_rs::api::Page;
 
 fn main() {
-  let parsed = serde_json::from_str::<Page>(JSON);
-  println!("{:#?}", parsed);
+  let de = &mut serde_json::Deserializer::from_str(JSON);
+  let result: Result<Page, _> = serde_path_to_error::deserialize(de);
+
+  match result {
+    Ok(parsed) => {
+      println!("{:#?}", parsed);
+    }
+    Err(err) => {
+      let path = err.path().to_string();
+      println!("Error at path: {}", path);
+    }
+  }
 }
 
 const JSON: &str = r##"{

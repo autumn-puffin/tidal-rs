@@ -7,9 +7,10 @@ use super::MixList;
 pub struct Artist {
   pub id: u64,
   pub name: String,
-  pub artist_types: Vec<ArtistType>,
+  pub artist_types: Option<Vec<ArtistType>>,
+  pub artist_roles: Option<Vec<ArtistRole>>,
   pub picture: Option<String>,
-  pub url: String,
+  pub url: Option<String>,
   pub mixes: MixList,
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
@@ -21,6 +22,13 @@ pub struct Artist {
 pub enum ArtistType {
   Artist,
   Contributor,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArtistRole {
+  pub category: String,
+  pub category_id: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
