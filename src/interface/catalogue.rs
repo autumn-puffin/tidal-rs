@@ -1,9 +1,7 @@
+use super::auth::Auth;
+use crate::{api::Page, Result};
 use isocountry::CountryCode;
 use url::Url;
-
-use crate::{api::Page, Result};
-
-use super::auth::Auth;
 
 pub mod album;
 pub mod artist;

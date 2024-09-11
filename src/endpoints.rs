@@ -1,5 +1,8 @@
+//! Endpoints for the Tidal API
+
 use std::fmt::{Display, Formatter};
 
+/// Base urls for accessing the Tidal API, defaults to the production urls
 pub mod base_urls {
   pub use prod::*;
   pub mod prod {
@@ -18,6 +21,7 @@ pub mod base_urls {
   }
 }
 
+/// Enum of available endpoints for the Tidal API
 #[derive(Debug, Clone, Copy)]
 pub enum Endpoint<'a> {
   OAuth2Token,

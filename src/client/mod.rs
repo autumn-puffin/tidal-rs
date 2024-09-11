@@ -1,6 +1,6 @@
 //! TIDAL-rs' main client implementation for the Tidal API, implimenting all of the available interfaces.
 //!
-//! The `Client` struct is a basic all-inclusive blocking client for the tidal API, there are also
+//! The `Client` struct is a basic all-inclusive blocking client for the Tidal API, there are also
 //! standalone clients for individual parts of the API, such as the `AuthClient`, and the `CatalogueClient`
 
 pub use crate::interface::{
