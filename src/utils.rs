@@ -1,6 +1,8 @@
 use crate::{
-  client::auth::{AuthCreds, GrantType, TokenResponse},
-  client::ClientCreds,
+  client::{
+    auth::{AuthCreds, GrantType, TokenResponse},
+    ClientCreds,
+  },
   endpoints::Endpoint,
   Result,
 };
@@ -44,6 +46,7 @@ pub fn get_request_helper<'a>(client: &Client, endpoint: Endpoint, auth: impl In
   request_helper(client, Method::GET, endpoint, auth)
 }
 pub fn oauth_request_helper<'a>(
+  client: &Client,
   endpoint: Endpoint,
   grant: GrantType,
   auth: impl Into<RequestAuth<'a>>,
@@ -52,17 +55,17 @@ pub fn oauth_request_helper<'a>(
   let mut params = extra_params.unwrap_or_default();
   params.insert("grant_type", grant.as_str());
 
-  let mut builder = post_request_helper(&Client::new(), endpoint, auth);
+  let mut builder = post_request_helper(client, endpoint, auth);
   builder = builder.form(&params);
 
   builder
 }
 
-pub fn client_login_impl(client_credentials: &ClientCreds) -> Result<AuthCreds> {
+pub fn client_login_impl(http_client: &Client, client_credentials: &ClientCreds) -> Result<AuthCreds> {
   let endpoint = Endpoint::OAuth2Token;
   let grant = GrantType::ClientCredentials;
 
-  let res = oauth_request_helper(endpoint, grant, client_credentials, None).send()?;
+  let res = oauth_request_helper(http_client, endpoint, grant, client_credentials, None).send()?;
 
   Ok(AuthCreds::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?))
 }

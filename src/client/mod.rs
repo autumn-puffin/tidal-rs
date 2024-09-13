@@ -12,7 +12,7 @@ use crate::{
   api::{Page, Paging, User, UserClient, UserSubscription},
   endpoints::Endpoint,
   error::ApiErrorResponse,
-  utils::{self, client_login_impl, get_request_helper, oauth_request_helper, post_request_helper},
+  utils::{self, get_request_helper, oauth_request_helper, post_request_helper},
   Result,
 };
 use isocountry::CountryCode;
@@ -30,6 +30,7 @@ use catalogue::CatalogueClient;
 
 /// A client for interacting with the Tidal API, implimenting all of the available interfaces.
 pub struct Client {
+  http_client: ReqwestClient,
   client_credentials: ClientCreds,
   auth_credentials: Option<AuthCreds>,
   scopes: Vec<String>,
@@ -41,6 +42,7 @@ impl Client {
     let credentials = client_credentials;
 
     Self {
+      http_client: ReqwestClient::new(),
       client_credentials: credentials,
       auth_credentials: None,
       scopes: Vec::new(),
@@ -62,11 +64,10 @@ impl Client {
   }
 
   fn get_page_response(&self, page: &str) -> Result<Response> {
-    let client = ReqwestClient::new();
     let endpoint = Endpoint::Pages(page);
     let auth = self.get_credentials()?;
 
-    get_request_helper(&client, endpoint, auth)
+    get_request_helper(&self.http_client, endpoint, auth)
       .query(&[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")])
       .send()
       .map_err(Into::into)
@@ -83,7 +84,12 @@ impl Auth for Client {
 }
 impl ClientFlow for Client {
   fn client_login(&mut self) -> Result<()> {
-    self.auth_credentials = Some(client_login_impl(&self.client_credentials)?);
+    let endpoint = Endpoint::OAuth2Token;
+    let grant = GrantType::ClientCredentials;
+
+    let res = oauth_request_helper(&self.http_client, endpoint, grant, &self.client_credentials, None).send()?;
+
+    self.auth_credentials = Some(AuthCreds::new(grant, self.client_credentials.clone(), res.json::<TokenResponse>()?));
     Ok(())
   }
 }
@@ -121,7 +127,7 @@ impl UserFlow for Client {
       ("redirect_uri", redirect_uri),
       ("code_verifier", &verifier),
     ]);
-    let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
+    let res = oauth_request_helper(&self.http_client, endpoint, grant, client_credentials, Some(params)).send()?;
     if !res.status().is_success() {
       return Err(res.json::<ApiErrorResponse>()?.into());
     }
@@ -134,13 +140,14 @@ impl UserFlow for Client {
 }
 impl DeviceFlow for Client {
   fn device_login_init(&self) -> Result<crate::interface::auth::flows::DeviceFlowResponse> {
-    let client = ReqwestClient::new();
     let endpoint = Endpoint::OAuth2DeviceAuth;
     let client_credentials = &self.client_credentials;
 
     let params = HashMap::from([("scope", "r_usr+w_usr+w_sub"), ("client_id", self.client_credentials.id())]);
 
-    let res = post_request_helper(&client, endpoint, client_credentials).form(&params).send()?;
+    let res = post_request_helper(&self.http_client, endpoint, client_credentials)
+      .form(&params)
+      .send()?;
     Ok(res.json()?)
   }
 
@@ -153,7 +160,7 @@ impl DeviceFlow for Client {
       ("client_id", client_credentials.id()),
       ("device_code", &response.device_code),
     ]);
-    let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
+    let res = oauth_request_helper(&self.http_client, endpoint, grant, client_credentials, Some(params)).send()?;
     if !res.status().is_success() {
       return Err(res.json::<ApiErrorResponse>()?.into());
     }
@@ -166,38 +173,39 @@ impl DeviceFlow for Client {
 }
 impl RefreshFlow for Client {
   fn refresh(&mut self) -> Result<()> {
-    self.auth_credentials.as_mut().ok_or(AuthError::Unauthenticated)?.refresh()
+    self
+      .auth_credentials
+      .as_mut()
+      .ok_or(AuthError::Unauthenticated)?
+      .refresh_with_http_client(&self.http_client)
   }
 }
 impl Users for Client {
   fn get_user(&self, user_id: &u64) -> Result<User> {
-    let client = ReqwestClient::new();
     let endpoint = Endpoint::Users(user_id);
     let auth = self.get_credentials()?;
 
-    let res = get_request_helper(&client, endpoint, auth)
+    let res = get_request_helper(&self.http_client, endpoint, auth)
       .query(&[("CountryCode", self.country.unwrap().to_string())])
       .send()?;
     Ok(res.json()?)
   }
 
   fn get_user_subscription(&self, user_id: &u64) -> Result<UserSubscription> {
-    let client = ReqwestClient::new();
     let endpoint = Endpoint::UsersSubscription(user_id);
     let auth = self.get_credentials()?;
 
-    let res = get_request_helper(&client, endpoint, auth)
+    let res = get_request_helper(&self.http_client, endpoint, auth)
       .query(&[("CountryCode", self.country.unwrap().to_string())])
       .send()?;
     Ok(res.json()?)
   }
 
   fn get_user_clients(&self, user_id: &u64) -> Result<Paging<UserClient>> {
-    let client = ReqwestClient::new();
     let endpoint = Endpoint::UsersClients(user_id);
     let auth = self.get_credentials()?;
 
-    let res = get_request_helper(&client, endpoint, auth)
+    let res = get_request_helper(&self.http_client, endpoint, auth)
       .query(&[("CountryCode", self.country.unwrap().to_string())])
       .send()?;
     Ok(res.json()?)

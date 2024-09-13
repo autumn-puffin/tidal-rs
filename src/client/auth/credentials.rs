@@ -1,5 +1,6 @@
 use chrono::Utc;
 use isocountry::CountryCode;
+use reqwest::blocking::Client as ReqwestClient;
 
 use super::{AuthUser, TokenResponse};
 use crate::{
@@ -7,7 +8,7 @@ use crate::{
   endpoints::Endpoint,
   error::ApiErrorResponse,
   interface::auth::{flows::*, *},
-  utils::{client_login_impl, oauth_request_helper},
+  utils::oauth_request_helper,
   Result,
 };
 use std::{collections::HashMap, fmt::Debug, ops::Deref};
@@ -76,6 +77,38 @@ impl AuthCreds {
   pub fn scope(&self) -> &str {
     &self.scope
   }
+
+  pub fn client_login_with_http_client(&mut self, http_client: &ReqwestClient) -> Result<()> {
+    let endpoint = Endpoint::OAuth2Token;
+    let grant = GrantType::ClientCredentials;
+
+    let res = oauth_request_helper(http_client, endpoint, grant, self.client_credentials(), None).send()?;
+
+    *self = AuthCreds::new(grant, self.client_credentials().clone(), res.json::<TokenResponse>()?);
+    Ok(())
+  }
+  pub fn refresh_with_http_client(&mut self, client: &ReqwestClient) -> Result<()> {
+    match self.grant_type() {
+      GrantType::ClientCredentials => self.client_login(),
+      _ => {
+        let endpoint = Endpoint::OAuth2Token;
+        let grant = GrantType::RefreshToken;
+        let client_credentials = self.client_credentials();
+        let refresh_token = self.refresh_token().unwrap();
+
+        let mut params = HashMap::new();
+        params.insert("refresh_token", refresh_token);
+
+        let res = oauth_request_helper(client, endpoint, grant, client_credentials, Some(params)).send()?;
+        if res.status().is_success() {
+          *self = AuthCreds::new(GrantType::RefreshToken, client_credentials.clone(), res.json::<TokenResponse>()?);
+        } else {
+          return Err(res.json::<ApiErrorResponse>()?.into());
+        }
+        Ok(())
+      }
+    }
+  }
 }
 impl Credentials for AuthCreds {
   fn expires_at(&self) -> u64 {
@@ -90,32 +123,12 @@ impl Credentials for AuthCreds {
 }
 impl ClientFlow for AuthCreds {
   fn client_login(&mut self) -> Result<()> {
-    *self = client_login_impl(self.client_credentials())?;
-    Ok(())
+    self.client_login_with_http_client(&ReqwestClient::new())
   }
 }
 impl RefreshFlow for AuthCreds {
   fn refresh(&mut self) -> Result<()> {
-    match self.grant_type() {
-      GrantType::ClientCredentials => self.client_login(),
-      _ => {
-        let endpoint = Endpoint::OAuth2Token;
-        let grant = GrantType::RefreshToken;
-        let client_credentials = self.client_credentials();
-        let refresh_token = self.refresh_token().unwrap();
-
-        let mut params = HashMap::new();
-        params.insert("refresh_token", refresh_token);
-
-        let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
-        if res.status().is_success() {
-          *self = AuthCreds::new(GrantType::RefreshToken, client_credentials.clone(), res.json::<TokenResponse>()?);
-        } else {
-          return Err(res.json::<ApiErrorResponse>()?.into());
-        }
-        Ok(())
-      }
-    }
+    self.refresh_with_http_client(&ReqwestClient::new())
   }
 }
 

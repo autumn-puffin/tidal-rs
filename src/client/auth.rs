@@ -103,7 +103,7 @@ impl AuthClient {
 }
 impl ClientFlow for AuthClient {
   fn client_login(&mut self) -> Result<()> {
-    self.credentials = Some(client_login_impl(&self.client_credentials)?);
+    self.credentials = Some(client_login_impl(&Client::new(), &self.client_credentials)?);
     Ok(())
   }
 }
@@ -138,7 +138,7 @@ impl UserFlow for AuthClient {
     params.insert("redirect_uri", redirect_uri);
     params.insert("code_verifier", &verifier);
 
-    let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
+    let res = oauth_request_helper(&Client::new(), endpoint, grant, client_credentials, Some(params)).send()?;
 
     let credentials = AuthCreds::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
     self.credentials = Some(credentials);
@@ -169,7 +169,7 @@ impl DeviceFlow for AuthClient {
     params.insert("client_id", self.client_credentials.id());
     params.insert("device_code", &response.device_code);
 
-    let res = oauth_request_helper(endpoint, grant, client_credentials, Some(params)).send()?;
+    let res = oauth_request_helper(&Client::new(), endpoint, grant, client_credentials, Some(params)).send()?;
 
     if res.status().is_success() {
       let credentials = AuthCreds::new(GrantType::DeviceCode, client_credentials.clone(), res.json::<TokenResponse>()?);
