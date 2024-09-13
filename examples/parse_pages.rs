@@ -4,15 +4,7 @@ fn main() {
   let de = &mut serde_json::Deserializer::from_str(JSON);
   let result: Result<Page, _> = serde_path_to_error::deserialize(de);
 
-  match result {
-    Ok(parsed) => {
-      println!("{:#?}", parsed);
-    }
-    Err(err) => {
-      let path = err.path().to_string();
-      println!("Error at path: {}", path);
-    }
-  }
+  println!("{:#?}", result);
 }
 
 const JSON: &str = r##"{

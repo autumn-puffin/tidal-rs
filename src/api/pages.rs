@@ -39,8 +39,7 @@ pub struct PageModule {
   pub scroll: Option<String>,
   pub self_link: Option<String>,
   pub show_more: Option<ShowMore>,
-  // pub paged_list: Option<PagingList<PageItem>>,
-  // pub lines: Option<u64>,
+
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
   pub unserialized: std::collections::HashMap<String, serde_json::Value>,

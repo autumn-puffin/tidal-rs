@@ -1,40 +1,43 @@
+use crate::api::{MediaType, PlaylistStyle};
 use serde::{Deserialize, Serialize};
 
-use crate::api::{Album, Artist, MediaType, Mix, PagingList, Playlist, Track, Video};
-
+pub mod header_modules;
+use header_modules::*;
+pub mod collection_modules;
+use collection_modules::*;
 #[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[serde(tag = "type")]
 pub enum ModuleType {
-  AlbumHeader,                              //AlbumHeaderModule,
-  AlbumItems,                               //AlbumItemsCollectionModule,
-  AlbumList(CollectionModule<Album>),       //AlbumCollectionModule,
-  ArtistHeader,                             //ArtistHeaderModule
-  ArticleList,                              //ArticleCollectionModule
-  ArtistList(CollectionModule<Artist>),     //ArtistCollectionModule
-  FeaturedPromotions,                       //FeaturedPromotionsModule
-  GenreHeader,                              //GenreHeaderModule
-  HighlightModule(HighlightModule),         //HighlightCollectionModule
-  MixHeader,                                //MixHeaderModule
-  MixList(CollectionModule<Mix>),           //MixCollectionModule
-  MixedTypesList,                           //AnyMediaCollectionModule
-  MultipleTopPromotions,                    //MultipleTopPromotionsModule
-  PageLinks,                                //PageLinksCollectionModule
-  PageLinksCloud,                           //PageLinksCloudCollectionModule
-  PageLinksImage,                           //PageLinksImagesCollectionModule
-  PlaylistList(CollectionModule<Playlist>), //PlaylistCollectionModule
-  Radio,                                    //RadioModule
-  SingleTopPromotion,                       //SingleTopPromotionModule
-  Store,                                    //StoreModule
-  TaskList(CollectionModule<Track>),        //SetupTasksModule
-  TextBlock,                                //TextModule
-  Ticketmaster,                             //TicketMasterModule
-  TrackList,                                //TrackCollectionModule
-  Social,                                   //SocialModule
-  VideoList(CollectionModule<Video>),       //VideoCollectionModule
-  ContributorHeader,                        //ContributorHeaderModule
-  ItemListWithRoles,                        //ContributionItemModule
-  LiveSessionList,                          //DJSessionModule
+  AlbumHeader(AlbumHeaderModule),             //AlbumHeaderModule,
+  AlbumItems,                                 //AlbumItemsCollectionModule,
+  AlbumList(AlbumCollectionModule),           //AlbumCollectionModule,
+  ArtistHeader(ArtistHeaderModule),           //ArtistHeaderModule
+  ArticleList(ArticleCollectionModule),       //ArticleCollectionModule
+  ArtistList(ArtistCollectionModule),         //ArtistCollectionModule
+  FeaturedPromotions,                         //FeaturedPromotionsModule
+  GenreHeader(GenreHeaderModule),             //GenreHeaderModule
+  HighlightModule(HighlightModule),           //HighlightCollectionModule
+  MixHeader(MixHeaderModule),                 //MixHeaderModule
+  MixList(MixCollectionModule),               //MixCollectionModule
+  MixedTypesList(AnyMediaCollectionModule),   //AnyMediaCollectionModule
+  MultipleTopPromotions,                      //MultipleTopPromotionsModule
+  PageLinks,                                  //PageLinksCollectionModule
+  PageLinksCloud,                             //PageLinksCloudCollectionModule
+  PageLinksImage,                             //PageLinksImagesCollectionModule
+  PlaylistList(PlaylistCollectionModule),     //PlaylistCollectionModule
+  Radio,                                      //RadioModule
+  SingleTopPromotion,                         //SingleTopPromotionModule
+  Store,                                      //StoreModule
+  TaskList,                                   //SetupTasksModule
+  TextBlock,                                  //TextModule
+  Ticketmaster,                               //TicketMasterModule
+  TrackList(TrackCollectionModule),           //TrackCollectionModule
+  Social,                                     //SocialModule
+  VideoList(VideoCollectionModule),           //VideoCollectionModule
+  ContributorHeader(ContributorHeaderModule), //ContributorHeaderModule
+  ItemListWithRoles,                          //ContributionItemModule
+  LiveSessionList,                            //DJSessionModule
   #[default]
   Unknown,
 }
@@ -42,7 +45,7 @@ pub enum ModuleType {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HighlightModule {
-  pub playlist_style: String,
+  pub playlist_style: Option<PlaylistStyle>,
   pub highlights: Vec<Highlight>,
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -53,11 +56,4 @@ pub struct Highlight {
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
   pub unserialized: std::collections::HashMap<String, serde_json::Value>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CollectionModule<T> {
-  pub supports_paging: bool,
-  pub paged_list: Option<PagingList<T>>,
 }

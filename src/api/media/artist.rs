@@ -11,6 +11,7 @@ pub struct Artist {
   pub artist_roles: Option<Vec<ArtistRole>>,
   pub picture: Option<String>,
   pub url: Option<String>,
+  #[serde(default)]
   pub mixes: MixList,
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
@@ -34,9 +35,9 @@ pub struct ArtistRole {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArtistRelationship {
+  pub r#type: String,
   pub id: u64,
   pub name: String,
-  pub r#type: String,
   pub picture: Option<String>,
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]

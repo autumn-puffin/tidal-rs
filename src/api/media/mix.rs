@@ -1,8 +1,32 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
-// pub enum MixType {}
+use super::Image;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum MixType {
+  ArtistMix,
+  DailyMix,
+  DiscoveryMix,
+  GenreMix,
+  HistoryAlltimeMix,
+  HistoryMonthlyMix,
+  HistoryYearlyMix,
+  MasterArtistMix,
+  MasterNewReleaseMix,
+  MasterTrackMix,
+  NewReleaseMix,
+  ProducerMix,
+  TrackMix,
+  SongwriterMix,
+  Unknown,
+  VideoDailyMix,
+  WelcomeMix,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct MixList {
   pub artist_mix: Option<String>,
@@ -16,6 +40,13 @@ pub struct MixList {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Mix {
+  pub id: String,
+  pub title: String,
+  pub sub_title: String,
+  pub short_subtitle: String,
+  pub mix_type: MixType,
+  pub images: HashMap<String, Image>,
+
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
   pub unserialized: std::collections::HashMap<String, serde_json::Value>,

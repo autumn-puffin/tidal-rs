@@ -32,3 +32,48 @@ pub enum PaymentType {
   Venmo,
   Vivo,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ListFormat {
+  Covers,
+  Numbers,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum PlaylistStyle {
+  Artist,
+  ArtistUpdated,
+  By,
+  ByExtended,
+  ByUpdated,
+  Description,
+  DescriptionUpdated,
+  Default,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum Layout {
+  List,
+  Grid,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum MediaTag {
+  DolbyAtmos,
+  HiresLossless,
+  Lossless,
+  Mqa,
+  Sony360ra,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum AudioMode {
+  Stereo,
+  DolbyAtmos,
+  Sony360ra,
+}
