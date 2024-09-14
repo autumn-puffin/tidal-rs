@@ -77,6 +77,21 @@ impl Client {
       .map_err(Into::into)
   }
 }
+impl Client {
+  fn oauth_helper(&mut self, endpoint: Endpoint, grant: GrantType, params: Option<HashMap<&str, &str>>) -> Result<()> {
+    let client_creds = &self.client_credentials;
+    let res = oauth_request_helper(&self.http_client, endpoint, grant, client_creds, params).send()?;
+    if !res.status().is_success() {
+      return Err(res.json::<ApiErrorResponse>()?.into());
+    }
+    let auth_creds = AuthCreds::new(grant, self.client_credentials.clone(), res.json::<TokenResponse>()?);
+    let country = auth_creds.auth_user().map(|user| user.country_code);
+
+    self.auth_credentials = Some(auth_creds);
+    self.country = country;
+    Ok(())
+  }
+}
 impl Auth for Client {
   type Credentials = AuthCreds;
   fn get_credentials(&self) -> Result<&AuthCreds> {
@@ -91,10 +106,7 @@ impl ClientFlow for Client {
     let endpoint = Endpoint::OAuth2Token;
     let grant = GrantType::ClientCredentials;
 
-    let res = oauth_request_helper(&self.http_client, endpoint, grant, &self.client_credentials, None).send()?;
-
-    self.auth_credentials = Some(AuthCreds::new(grant, self.client_credentials.clone(), res.json::<TokenResponse>()?));
-    Ok(())
+    self.oauth_helper(endpoint, grant, None)
   }
 }
 impl UserFlow for Client {
@@ -122,24 +134,18 @@ impl UserFlow for Client {
   fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {
     let endpoint = Endpoint::OAuth2Token;
     let grant = GrantType::AuthorizationCode;
-    let client_credentials = &self.client_credentials;
-    let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::MissingRedirectUri)?;
-    let verifier = info.pkce_verifier;
-    let params = HashMap::from([
-      ("client_id", self.client_credentials.id()),
-      ("code", &code),
-      ("redirect_uri", redirect_uri),
-      ("code_verifier", &verifier),
-    ]);
-    let res = oauth_request_helper(&self.http_client, endpoint, grant, client_credentials, Some(params)).send()?;
-    if !res.status().is_success() {
-      return Err(res.json::<ApiErrorResponse>()?.into());
-    }
+    let verifier = info.pkce_verifier.as_str();
+    let id = self.client_credentials.id().to_owned();
+    let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::MissingRedirectUri)?.clone();
 
-    let credentials = AuthCreds::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
-    self.country = credentials.auth_user().map(|user| user.country_code);
-    self.auth_credentials = Some(credentials);
-    Ok(())
+    let params = HashMap::from([
+      ("code_verifier", verifier),
+      ("code", &code),
+      ("client_id", &id),
+      ("redirect_uri", &redirect_uri),
+    ]);
+
+    self.oauth_helper(endpoint, grant, Some(params))
   }
 }
 impl DeviceFlow for Client {
@@ -158,21 +164,10 @@ impl DeviceFlow for Client {
   fn try_device_login_finalize(&mut self, response: &crate::interface::auth::flows::DeviceFlowResponse) -> Result<()> {
     let endpoint = Endpoint::OAuth2Token;
     let grant = GrantType::DeviceCode;
-    let client_credentials = &self.client_credentials;
-    let params = HashMap::from([
-      ("scope", "r_usr+w_usr+w_sub"),
-      ("client_id", client_credentials.id()),
-      ("device_code", &response.device_code),
-    ]);
-    let res = oauth_request_helper(&self.http_client, endpoint, grant, client_credentials, Some(params)).send()?;
-    if !res.status().is_success() {
-      return Err(res.json::<ApiErrorResponse>()?.into());
-    }
+    let id = self.client_credentials.id().to_owned();
+    let params = HashMap::from([("scope", "r_usr+w_usr+w_sub"), ("client_id", &id), ("device_code", &response.device_code)]);
 
-    let credentials = AuthCreds::new(grant, client_credentials.clone(), res.json::<TokenResponse>()?);
-    self.country = credentials.auth_user().map(|user| user.country_code);
-    self.auth_credentials = Some(credentials);
-    Ok(())
+    self.oauth_helper(endpoint, grant, Some(params))
   }
 }
 impl RefreshFlow for Client {
