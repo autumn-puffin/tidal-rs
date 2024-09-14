@@ -5,11 +5,11 @@
 
 pub use crate::interface::{
   auth::{flows::*, *},
-  catalogue::*,
+  catalogue::{track_catalogue::*, *},
   users::*,
 };
 use crate::{
-  api::{Page, Paging, User, UserClient, UserSubscription},
+  api::{Page, Paging, Track, User, UserClient, UserSubscription},
   endpoints::Endpoint,
   error::ApiErrorResponse,
   utils::{self, get_request_helper, oauth_request_helper, post_request_helper},
@@ -19,6 +19,7 @@ use isocountry::CountryCode;
 use reqwest::blocking::{Client as ReqwestClient, Response};
 use std::collections::HashMap;
 use url::Url;
+use uuid::Uuid;
 
 /// Standalone auth client implimentation
 pub mod auth;
@@ -36,10 +37,12 @@ pub struct Client {
   scopes: Vec<String>,
   redirect_uri: Option<String>,
   country: Option<CountryCode>,
+  streaming_session_id: Uuid,
 }
 impl Client {
   pub fn new(client_credentials: ClientCreds) -> Self {
     let credentials = client_credentials;
+    let streaming_session_id = Uuid::new_v4();
 
     Self {
       http_client: ReqwestClient::new(),
@@ -48,6 +51,7 @@ impl Client {
       scopes: Vec::new(),
       redirect_uri: None,
       country: None,
+      streaming_session_id,
     }
   }
   pub fn as_auth(&self) -> AuthClient {
@@ -63,7 +67,7 @@ impl Client {
     self.country = Some(country);
   }
 
-  fn get_page_response(&self, page: &str) -> Result<Response> {
+  pub fn get_page_response(&self, page: &str) -> Result<Response> {
     let endpoint = Endpoint::Pages(page);
     let auth = self.get_credentials()?;
 
@@ -219,6 +223,30 @@ impl Catalogue for Client {
   fn get_page(&self, page: &str) -> Result<Page> {
     let res = self.get_page_response(page)?;
     Ok(res.json()?)
+  }
+}
+impl TrackCatalogue for Client {
+  fn get_track(&self, track_id: &u64) -> Result<Track> {
+    let endpoint = Endpoint::Tracks(track_id);
+    let auth = self.get_credentials()?;
+
+    let res = get_request_helper(&self.http_client, endpoint, auth)
+      .query(&[("CountryCode", self.country.unwrap().to_string())])
+      .send()?;
+    Ok(res.json()?)
+  }
+  fn playback_info_for_track(&self, track_id: &u64, options: &PlaybackInfoOptions) -> Result<Response> {
+    let endpoint = Endpoint::TracksPlaybackinfo(track_id);
+    let auth = self.get_credentials()?;
+    let query = &options.get_query_params();
+
+    get_request_helper(&self.http_client, endpoint, auth)
+      .header("x-tidal-prefetch", &options.prefetch.to_string())
+      .header("x-tidal-token", self.client_credentials.id())
+      .header("x-tidal-streamingsessionid", &self.streaming_session_id.to_string())
+      .query(query)
+      .send()
+      .map_err(Into::into)
   }
 }
 

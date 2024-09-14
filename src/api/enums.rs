@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AudioQuality {
   Low,
@@ -7,6 +7,17 @@ pub enum AudioQuality {
   Lossless,
   HiRes,
   HiResLossless,
+}
+impl AudioQuality {
+  pub fn as_str(&self) -> &str {
+    match self {
+      AudioQuality::Low => "LOW",
+      AudioQuality::High => "HIGH",
+      AudioQuality::Lossless => "LOSSLESS",
+      AudioQuality::HiRes => "HI_RES",
+      AudioQuality::HiResLossless => "HI_RES_LOSSLESS",
+    }
+  }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -76,4 +87,34 @@ pub enum AudioMode {
   Stereo,
   DolbyAtmos,
   Sony360ra,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum PlaybackMode {
+  Offline,
+  Stream,
+}
+impl PlaybackMode {
+  pub fn as_str(&self) -> &str {
+    match self {
+      PlaybackMode::Offline => "OFFLINE",
+      PlaybackMode::Stream => "STREAM",
+    }
+  }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum AssetPresentation {
+  Full,
+  Preview,
+}
+impl AssetPresentation {
+  pub fn as_str(&self) -> &str {
+    match self {
+      AssetPresentation::Full => "FULL",
+      AssetPresentation::Preview => "PREVIEW",
+    }
+  }
 }

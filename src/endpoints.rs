@@ -31,6 +31,8 @@ pub enum Endpoint<'a> {
   UsersSubscription(&'a u64),
   UsersClients(&'a u64),
   Pages(&'a str),
+  Tracks(&'a u64),
+  TracksPlaybackinfo(&'a u64),
 }
 impl Display for Endpoint<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
@@ -42,6 +44,8 @@ impl Display for Endpoint<'_> {
       Self::UsersSubscription(id) => (base_urls::API_URL_V1, format!("users/{id}/subscription")),
       Self::UsersClients(id) => (base_urls::API_URL_V1, format!("users/{id}/clients")),
       Self::Pages(path) => (base_urls::API_URL_V1, format!("pages/{path}")),
+      Self::Tracks(id) => (base_urls::API_URL_V1, format!("tracks/{id}")),
+      Self::TracksPlaybackinfo(id) => (base_urls::API_URL_V1, format!("tracks/{id}/playbackinfo")),
     };
     write! {f, "{}{}", base, path}
   }

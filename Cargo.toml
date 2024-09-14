@@ -17,6 +17,7 @@ serde_flat_path = "0.2"
 isocountry = "0.3"
 url = "2.5"
 chrono = "0.4"
+uuid = {version = "1.10", features = ["v4"]}
 
 [dev-dependencies]
 dotenvy_macro = "0.15"
