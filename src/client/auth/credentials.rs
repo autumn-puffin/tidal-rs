@@ -11,7 +11,7 @@ use crate::{
   utils::oauth_request_helper,
   Result,
 };
-use std::{collections::HashMap, fmt::Debug, ops::Deref};
+use std::{fmt::Debug, ops::Deref};
 
 #[derive(Debug)]
 pub struct AuthCreds {
@@ -96,8 +96,7 @@ impl AuthCreds {
         let client_credentials = self.client_credentials();
         let refresh_token = self.refresh_token().unwrap();
 
-        let mut params = HashMap::new();
-        params.insert("refresh_token", refresh_token);
+        let params = &[("refresh_token", refresh_token)];
 
         let res = oauth_request_helper(client, endpoint, grant, client_credentials, Some(params)).send()?;
         if res.status().is_success() {

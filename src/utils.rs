@@ -13,7 +13,6 @@ use reqwest::{
   Method,
 };
 use sha2::{Digest, Sha256};
-use std::collections::HashMap;
 
 pub enum RequestAuth<'a> {
   Basic(&'a ClientCreds),
@@ -50,10 +49,10 @@ pub fn oauth_request_helper<'a>(
   endpoint: Endpoint,
   grant: GrantType,
   auth: impl Into<RequestAuth<'a>>,
-  extra_params: Option<HashMap<&str, &str>>,
+  extra_params: Option<&[(&str, &str)]>,
 ) -> RequestBuilder {
-  let mut params = extra_params.unwrap_or_default();
-  params.insert("grant_type", grant.as_str());
+  let mut params = extra_params.unwrap_or_default().to_vec();
+  params.push(("grant_type", grant.as_str()));
 
   let mut builder = post_request_helper(client, endpoint, auth);
   builder = builder.form(&params);

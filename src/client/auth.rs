@@ -12,7 +12,7 @@ use chrono::Utc;
 use isocountry::CountryCode;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fmt::Debug};
+use std::fmt::Debug;
 
 pub mod credentials;
 pub use credentials::AuthCreds;
@@ -132,11 +132,12 @@ impl UserFlow for AuthClient {
     let redirect_uri = self.redirect_uri.as_deref().ok_or(AuthError::MissingRedirectUri)?;
     let verifier = info.pkce_verifier;
 
-    let mut params = HashMap::new();
-    params.insert("client_id", self.client_credentials.id());
-    params.insert("code", &code);
-    params.insert("redirect_uri", redirect_uri);
-    params.insert("code_verifier", &verifier);
+    let params = &[
+      ("client_id", self.client_credentials.id()),
+      ("code", &code),
+      ("redirect_uri", redirect_uri),
+      ("code_verifier", &verifier),
+    ];
 
     let res = oauth_request_helper(&Client::new(), endpoint, grant, client_credentials, Some(params)).send()?;
 
@@ -151,9 +152,7 @@ impl DeviceFlow for AuthClient {
     let endpoint = Endpoint::OAuth2DeviceAuth;
     let client_credentials = &self.client_credentials;
 
-    let mut params = HashMap::new();
-    params.insert("scope", "r_usr+w_usr+w_sub");
-    params.insert("client_id", self.client_credentials.id());
+    let params = &[("scope", "r_usr+w_usr+w_sub"), ("client_id", self.client_credentials.id())];
 
     let res = post_request_helper(&client, endpoint, client_credentials).form(&params).send()?;
 
@@ -164,10 +163,11 @@ impl DeviceFlow for AuthClient {
     let grant = GrantType::DeviceCode;
     let client_credentials = &self.client_credentials;
 
-    let mut params = HashMap::new();
-    params.insert("scope", "r_usr+w_usr+w_sub");
-    params.insert("client_id", self.client_credentials.id());
-    params.insert("device_code", &response.device_code);
+    let params = &[
+      ("scope", "r_usr+w_usr+w_sub"),
+      ("client_id", self.client_credentials.id()),
+      ("device_code", &response.device_code),
+    ];
 
     let res = oauth_request_helper(&Client::new(), endpoint, grant, client_credentials, Some(params)).send()?;
 

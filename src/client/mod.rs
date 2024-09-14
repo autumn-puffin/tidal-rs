@@ -17,7 +17,6 @@ use crate::{
 };
 use isocountry::CountryCode;
 use reqwest::blocking::{Client as ReqwestClient, Response};
-use std::collections::HashMap;
 use url::Url;
 use uuid::Uuid;
 
@@ -78,7 +77,7 @@ impl Client {
   }
 }
 impl Client {
-  fn oauth_helper(&mut self, endpoint: Endpoint, grant: GrantType, params: Option<HashMap<&str, &str>>) -> Result<()> {
+  fn oauth_helper(&mut self, endpoint: Endpoint, grant: GrantType, params: Option<&[(&str, &str)]>) -> Result<()> {
     let client_creds = &self.client_credentials;
     let res = oauth_request_helper(&self.http_client, endpoint, grant, client_creds, params).send()?;
     if !res.status().is_success() {
@@ -138,12 +137,12 @@ impl UserFlow for Client {
     let id = self.client_credentials.id().to_owned();
     let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::MissingRedirectUri)?.clone();
 
-    let params = HashMap::from([
+    let params = &[
       ("code_verifier", verifier),
       ("code", &code),
       ("client_id", &id),
       ("redirect_uri", &redirect_uri),
-    ]);
+    ];
 
     self.oauth_helper(endpoint, grant, Some(params))
   }
@@ -153,11 +152,9 @@ impl DeviceFlow for Client {
     let endpoint = Endpoint::OAuth2DeviceAuth;
     let client_credentials = &self.client_credentials;
 
-    let params = HashMap::from([("scope", "r_usr+w_usr+w_sub"), ("client_id", self.client_credentials.id())]);
+    let params = &[("scope", "r_usr+w_usr+w_sub"), ("client_id", self.client_credentials.id())];
 
-    let res = post_request_helper(&self.http_client, endpoint, client_credentials)
-      .form(&params)
-      .send()?;
+    let res = post_request_helper(&self.http_client, endpoint, client_credentials).form(params).send()?;
     Ok(res.json()?)
   }
 
@@ -165,7 +162,7 @@ impl DeviceFlow for Client {
     let endpoint = Endpoint::OAuth2Token;
     let grant = GrantType::DeviceCode;
     let id = self.client_credentials.id().to_owned();
-    let params = HashMap::from([("scope", "r_usr+w_usr+w_sub"), ("client_id", &id), ("device_code", &response.device_code)]);
+    let params = &[("scope", "r_usr+w_usr+w_sub"), ("client_id", &id), ("device_code", &response.device_code)];
 
     self.oauth_helper(endpoint, grant, Some(params))
   }
@@ -185,7 +182,7 @@ impl Users for Client {
     let auth = self.get_credentials()?;
 
     let res = get_request_helper(&self.http_client, endpoint, auth)
-      .query(&[("CountryCode", self.country.unwrap().to_string())])
+      .query(&[("CountryCode", self.country.unwrap_or(CountryCode::USA).to_string())])
       .send()?;
     Ok(res.json()?)
   }
