@@ -1,5 +1,6 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::api::{AudioMode, AudioQuality};
 
@@ -10,7 +11,7 @@ use super::{ArtistRelationship, MediaMetadata};
 pub struct Album {
   pub id: u64,
   pub title: String,
-  pub cover: String,
+  pub cover: Uuid,
   pub vibrant_color: String,
   pub url: String,
   pub video_cover: Option<String>,
@@ -37,10 +38,10 @@ pub struct Album {
 pub struct AlbumRelationship {
   pub id: u64,
   pub title: String,
-  pub cover: String,
+  pub cover: Uuid,
   pub vibrant_color: String,
   pub url: String,
-  pub video_cover: Option<String>,
+  pub video_cover: Option<Uuid>,
   pub release_date: NaiveDate,
 
   #[cfg(feature = "show_unmodeled")]

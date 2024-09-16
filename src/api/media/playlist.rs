@@ -1,12 +1,13 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use super::ArtistRelationship;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Playlist {
-  pub uuid: String,
+  pub uuid: Uuid,
   pub title: String,
   pub description: String,
   pub url: String,
@@ -14,8 +15,8 @@ pub struct Playlist {
   pub number_of_videos: u64,
   pub duration: u64,
   pub promoted_artists: Vec<ArtistRelationship>,
-  pub image: String,
-  pub square_image: String,
+  pub image: Uuid,
+  pub square_image: Uuid,
   pub last_item_added_at: DateTime<Utc>,
   pub r#type: PlaylistType,
 

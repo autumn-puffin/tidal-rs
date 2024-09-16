@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use super::MixList;
 
@@ -9,7 +10,7 @@ pub struct Artist {
   pub name: String,
   pub artist_types: Option<Vec<ArtistType>>,
   pub artist_roles: Option<Vec<ArtistRole>>,
-  pub picture: Option<String>,
+  pub picture: Option<Uuid>,
   pub url: Option<String>,
   #[serde(default)]
   pub mixes: MixList,
@@ -38,7 +39,7 @@ pub struct ArtistRelationship {
   pub r#type: String,
   pub id: u64,
   pub name: String,
-  pub picture: Option<String>,
+  pub picture: Option<Uuid>,
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
   pub unserialized: std::collections::HashMap<String, serde_json::Value>,
