@@ -9,6 +9,7 @@ use chrono::Utc;
 pub mod flows;
 pub use flows::*;
 use isocountry::CountryCode;
+use serde::{Deserialize, Serialize};
 
 /// Access and manage authenticated credentials
 ///
@@ -63,7 +64,7 @@ pub trait Credentials: RefreshFlow {
 }
 
 /// The type of grant being used for authentication
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum GrantType {
   ClientCredentials,
   AuthorizationCode,

@@ -17,6 +17,7 @@ use crate::{
 };
 use isocountry::CountryCode;
 use reqwest::blocking::{Client as ReqwestClient, Response};
+use serde::{Deserialize, Serialize};
 use url::Url;
 use uuid::Uuid;
 
@@ -243,7 +244,7 @@ impl TrackCatalogue for Client {
 }
 
 /// A simple struct for storing client credentials, with a custom Debug impl that redacts the client secret.
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct ClientCreds {
   client_id: String,
   client_secret: String,

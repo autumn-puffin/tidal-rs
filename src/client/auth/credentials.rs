@@ -1,6 +1,7 @@
 use chrono::Utc;
 use isocountry::CountryCode;
 use reqwest::blocking::Client as ReqwestClient;
+use serde::{Deserialize, Serialize};
 
 use super::{AuthUser, TokenResponse};
 use crate::{
@@ -13,7 +14,7 @@ use crate::{
 };
 use std::{fmt::Debug, ops::Deref};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AuthCreds {
   client_credentials: ClientCreds,
   grant_type: GrantType,
@@ -131,6 +132,7 @@ impl RefreshFlow for AuthCreds {
   }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Token(pub String);
 impl Token {
   pub fn new(token: String) -> Self {
