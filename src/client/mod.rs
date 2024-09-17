@@ -91,10 +91,36 @@ impl Client {
     self.country = country;
     Ok(())
   }
-  fn get_helper(&self, endpoint: Endpoint, query: Option<&[(&str, &str)]>) -> Result<Response> {
+  fn get_helper(&self, endpoint: Endpoint, query: Option<&[(&str, &str)]>, form: Option<&[(&str, &str)]>) -> Result<Response> {
     let auth = self.get_credentials()?;
-    get_request_helper(&self.http_client, endpoint, auth)
+    self
+      .http_client
+      .get(endpoint.to_string())
       .query(query.unwrap_or_default())
+      .form(form.unwrap_or_default())
+      .bearer_auth(auth.access_token())
+      .send()
+      .map_err(Into::into)
+  }
+  fn post_helper(&self, endpoint: Endpoint, query: Option<&[(&str, &str)]>, form: Option<&[(&str, &str)]>) -> Result<Response> {
+    let auth = self.get_credentials()?;
+    self
+      .http_client
+      .post(endpoint.to_string())
+      .query(query.unwrap_or_default())
+      .form(form.unwrap_or_default())
+      .bearer_auth(auth.access_token())
+      .send()
+      .map_err(Into::into)
+  }
+  fn delete_helper(&self, endpoint: Endpoint, query: Option<&[(&str, &str)]>, form: Option<&[(&str, &str)]>) -> Result<Response> {
+    let auth = self.get_credentials()?;
+    self
+      .http_client
+      .delete(endpoint.to_string())
+      .query(query.unwrap_or_default())
+      .form(form.unwrap_or_default())
+      .bearer_auth(auth.access_token())
       .send()
       .map_err(Into::into)
   }
@@ -111,13 +137,13 @@ impl Auth for Client {
 impl Sessions for Client {
   fn get_session_from_auth(&self) -> Result<Session> {
     let endpoint = Endpoint::SessionsOfBearer;
-    let res = self.get_helper(endpoint, None)?;
+    let res = self.get_helper(endpoint, None, None)?;
     Ok(res.json()?)
   }
 
   fn get_session(&self, session_id: &str) -> Result<Session> {
     let endpoint = Endpoint::Sessions(session_id);
-    let res = self.get_helper(endpoint, None)?;
+    let res = self.get_helper(endpoint, None, None)?;
     Ok(res.json()?)
   }
 }
