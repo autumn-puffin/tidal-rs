@@ -13,6 +13,11 @@ pub trait Users: Auth {
   /// Get a user's clients
   fn get_user_clients(&self, user_id: &u64) -> Result<Paging<UserClient>>;
 
+  /// Authorize a client for offline access
+  fn authorize_client(&self, client_id: &u64, name: &str) -> Result<()>;
+  /// Deauthorize a client for offline access
+  fn deauthorize_client(&self, client_id: &u64) -> Result<()>;
+
   /// Get the current user
   fn get_current_user(&self) -> Result<User> {
     let credentials = self.get_credentials()?;

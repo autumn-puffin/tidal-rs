@@ -253,6 +253,19 @@ impl Users for Client {
       .send()?;
     Ok(res.json()?)
   }
+
+  fn authorize_client(&self, client_id: &u64, name: &str) -> Result<()> {
+    let endpoint = Endpoint::UsersClients(client_id);
+    let form = &[("clientName", name), ("clientId", &client_id.to_string())];
+    self.post_helper(endpoint, None, Some(form))?;
+    Ok(())
+  }
+
+  fn deauthorize_client(&self, client_id: &u64) -> Result<()> {
+    let endpoint = Endpoint::UsersClients(client_id);
+    self.delete_helper(endpoint, None, None)?;
+    Ok(())
+  }
 }
 impl Catalogue for Client {
   fn get_country(&self) -> Result<&CountryCode> {

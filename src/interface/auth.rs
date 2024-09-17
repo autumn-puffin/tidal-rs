@@ -64,7 +64,9 @@ pub trait Credentials: RefreshFlow {
 }
 
 pub trait Sessions: Auth {
+  /// Get a session from the current authentication credentials
   fn get_session_from_auth(&self) -> Result<Session>;
+  /// Get a session from it's specified id
   fn get_session(&self, session_id: &str) -> Result<Session>;
 }
 
