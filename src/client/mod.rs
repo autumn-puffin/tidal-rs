@@ -9,7 +9,7 @@ pub use crate::interface::{
   users::*,
 };
 use crate::{
-  api::{Page, Paging, Track, User, UserClient, UserSubscription},
+  api::{Page, Paging, Session, Track, User, UserClient, UserSubscription},
   endpoints::Endpoint,
   error::ApiErrorResponse,
   utils::{self, get_request_helper, oauth_request_helper, post_request_helper},
@@ -91,6 +91,13 @@ impl Client {
     self.country = country;
     Ok(())
   }
+  fn get_helper(&self, endpoint: Endpoint, query: Option<&[(&str, &str)]>) -> Result<Response> {
+    let auth = self.get_credentials()?;
+    get_request_helper(&self.http_client, endpoint, auth)
+      .query(query.unwrap_or_default())
+      .send()
+      .map_err(Into::into)
+  }
 }
 impl Auth for Client {
   type Credentials = AuthCreds;
@@ -99,6 +106,19 @@ impl Auth for Client {
   }
   fn get_credentials_mut(&mut self) -> Result<&mut AuthCreds> {
     self.auth_credentials.as_mut().ok_or(AuthError::Unauthenticated.into())
+  }
+}
+impl Sessions for Client {
+  fn get_session_from_auth(&self) -> Result<Session> {
+    let endpoint = Endpoint::SessionsOfBearer;
+    let res = self.get_helper(endpoint, None)?;
+    Ok(res.json()?)
+  }
+
+  fn get_session(&self, session_id: &str) -> Result<Session> {
+    let endpoint = Endpoint::Sessions(session_id);
+    let res = self.get_helper(endpoint, None)?;
+    Ok(res.json()?)
   }
 }
 impl ClientFlow for Client {

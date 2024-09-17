@@ -1,6 +1,6 @@
 use dotenvy_macro::dotenv;
 use tidal_rs::{
-  client::{Client, ClientCreds},
+  client::{Client, ClientCreds, Sessions},
   interface::{
     auth::{Auth as _, DeviceFlow as _},
     users::Users as _,
@@ -31,4 +31,7 @@ fn main() {
 
   let clients_res = client.get_current_user_clients().unwrap();
   println!("User Clients: {:#?}\n", clients_res);
+
+  let session = client.get_session_from_auth().unwrap();
+  println!("Session Info: {:#?}\n", session);
 }

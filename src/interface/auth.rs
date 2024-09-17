@@ -3,7 +3,7 @@
 //! This module contains the traits and structs for handling authentication with the Tidal API,
 //! allowing the user to implement as many or as few of the flows as they want
 
-use crate::Result;
+use crate::{api::Session, Result};
 use chrono::Utc;
 
 pub mod flows;
@@ -61,6 +61,11 @@ pub trait Credentials: RefreshFlow {
   fn country_code(&self) -> Option<&CountryCode>;
   /// Returns the id of the user associated with the credentials, if any
   fn user_id(&self) -> Option<&u64>;
+}
+
+pub trait Sessions: Auth {
+  fn get_session_from_auth(&self) -> Result<Session>;
+  fn get_session(&self, session_id: &str) -> Result<Session>;
 }
 
 /// The type of grant being used for authentication

@@ -1,6 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use isocountry::CountryCode;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use super::{AudioQuality, PaymentType, SubscriptionType};
 
@@ -41,9 +42,10 @@ pub struct UserSubscription {
   payment_type: PaymentType,
   payment_overdue: bool,
 }
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct Subscription {
+pub struct Subscription {
   #[serde(rename = "type")]
   subscription_type: SubscriptionType,
   offline_grace_period: u64,
@@ -63,6 +65,7 @@ pub struct UserClient {
   number_of_offline_albums: u64,
   number_of_offline_playlists: u64,
 }
+
 #[serde_flat_path::flat_path]
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -71,4 +74,24 @@ struct UserClientApplication {
   #[flat_path(path = ["type", "name"])]
   application_type: String,
   service: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Session {
+  pub session_id: Uuid,
+  pub user_id: u64,
+  pub country_code: CountryCode,
+  pub channel_id: u64,
+  pub partner_id: u64,
+  pub client: SessionClient,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionClient {
+  pub id: u64,
+  pub name: String,
+  pub authorized_for_offline: bool,
+  pub authorized_for_offline_date: Option<u64>,
 }
