@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::Write;
 use tidal_rs::{
   client::{Client, ClientCreds},
-  interface::{auth::*, catalogue::*},
+  interface::auth::*,
 };
 
 fn get_client() -> Client {
