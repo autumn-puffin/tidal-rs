@@ -3,6 +3,8 @@
 //! The `Client` struct is a basic all-inclusive blocking client for the Tidal API, there are also
 //! standalone clients for individual parts of the API, such as the `AuthClient`, and the `CatalogueClient`
 
+use std::collections::HashMap;
+
 pub use crate::interface::{
   auth::{flows::*, *},
   catalogue::{track_catalogue::*, *},
@@ -16,7 +18,10 @@ use crate::{
   Result,
 };
 use isocountry::CountryCode;
-use reqwest::blocking::{Client as ReqwestClient, Response};
+use reqwest::{
+  blocking::{Client as ReqwestClient, Response},
+  header::HeaderMap,
+};
 use serde::{Deserialize, Serialize};
 use url::Url;
 use uuid::Uuid;
@@ -91,35 +96,62 @@ impl Client {
     self.country = country;
     Ok(())
   }
-  fn get_helper(&self, endpoint: Endpoint, query: Option<&[(&str, &str)]>, form: Option<&[(&str, &str)]>) -> Result<Response> {
+  fn get_helper(
+    &self,
+    endpoint: Endpoint,
+    query: Option<&[(&str, &str)]>,
+    form: Option<&[(&str, &str)]>,
+    headers: Option<&[(&str, &str)]>,
+  ) -> Result<Response> {
     let auth = self.get_credentials()?;
+    let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
+    let headers = HeaderMap::try_from(headers).unwrap();
     self
       .http_client
       .get(endpoint.to_string())
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
+      .headers(headers)
       .bearer_auth(auth.access_token())
       .send()
       .map_err(Into::into)
   }
-  fn post_helper(&self, endpoint: Endpoint, query: Option<&[(&str, &str)]>, form: Option<&[(&str, &str)]>) -> Result<Response> {
+  fn post_helper(
+    &self,
+    endpoint: Endpoint,
+    query: Option<&[(&str, &str)]>,
+    form: Option<&[(&str, &str)]>,
+    headers: Option<&[(&str, &str)]>,
+  ) -> Result<Response> {
     let auth = self.get_credentials()?;
+    let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
+    let headers = HeaderMap::try_from(headers).unwrap();
     self
       .http_client
       .post(endpoint.to_string())
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
+      .headers(headers)
       .bearer_auth(auth.access_token())
       .send()
       .map_err(Into::into)
   }
-  fn delete_helper(&self, endpoint: Endpoint, query: Option<&[(&str, &str)]>, form: Option<&[(&str, &str)]>) -> Result<Response> {
+  fn delete_helper(
+    &self,
+    endpoint: Endpoint,
+    query: Option<&[(&str, &str)]>,
+    form: Option<&[(&str, &str)]>,
+    headers: Option<&[(&str, &str)]>,
+  ) -> Result<Response> {
     let auth = self.get_credentials()?;
+    let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
+    let headers = HeaderMap::try_from(headers).unwrap();
     self
       .http_client
       .delete(endpoint.to_string())
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
+      .headers(headers)
       .bearer_auth(auth.access_token())
       .send()
       .map_err(Into::into)
@@ -137,13 +169,13 @@ impl Auth for Client {
 impl Sessions for Client {
   fn get_session_from_auth(&self) -> Result<Session> {
     let endpoint = Endpoint::SessionsOfBearer;
-    let res = self.get_helper(endpoint, None, None)?;
+    let res = self.get_helper(endpoint, None, None, None)?;
     Ok(res.json()?)
   }
 
   fn get_session(&self, session_id: &str) -> Result<Session> {
     let endpoint = Endpoint::Sessions(session_id);
-    let res = self.get_helper(endpoint, None, None)?;
+    let res = self.get_helper(endpoint, None, None, None)?;
     Ok(res.json()?)
   }
 }
@@ -226,44 +258,35 @@ impl RefreshFlow for Client {
 impl Users for Client {
   fn get_user(&self, user_id: &u64) -> Result<User> {
     let endpoint = Endpoint::Users(user_id);
-    let auth = self.get_credentials()?;
-
-    let res = get_request_helper(&self.http_client, endpoint, auth)
-      .query(&[("CountryCode", self.country.unwrap_or(CountryCode::USA).to_string())])
-      .send()?;
+    let query = &[("CountryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
     Ok(res.json()?)
   }
 
   fn get_user_subscription(&self, user_id: &u64) -> Result<UserSubscription> {
     let endpoint = Endpoint::UsersSubscription(user_id);
-    let auth = self.get_credentials()?;
-
-    let res = get_request_helper(&self.http_client, endpoint, auth)
-      .query(&[("CountryCode", self.country.unwrap().to_string())])
-      .send()?;
+    let query = &[("CountryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
     Ok(res.json()?)
   }
 
   fn get_user_clients(&self, user_id: &u64) -> Result<Paging<UserClient>> {
     let endpoint = Endpoint::UsersClients(user_id);
-    let auth = self.get_credentials()?;
-
-    let res = get_request_helper(&self.http_client, endpoint, auth)
-      .query(&[("CountryCode", self.country.unwrap().to_string())])
-      .send()?;
+    let query = &[("CountryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
     Ok(res.json()?)
   }
 
   fn authorize_client(&self, client_id: &u64, name: &str) -> Result<()> {
     let endpoint = Endpoint::UsersClients(client_id);
     let form = &[("clientName", name), ("clientId", &client_id.to_string())];
-    self.post_helper(endpoint, None, Some(form))?;
+    self.post_helper(endpoint, None, Some(form), None)?;
     Ok(())
   }
 
   fn deauthorize_client(&self, client_id: &u64) -> Result<()> {
     let endpoint = Endpoint::UsersClients(client_id);
-    self.delete_helper(endpoint, None, None)?;
+    self.delete_helper(endpoint, None, None, None)?;
     Ok(())
   }
 }
@@ -280,25 +303,20 @@ impl Catalogue for Client {
 impl TrackCatalogue for Client {
   fn get_track(&self, track_id: &u64) -> Result<Track> {
     let endpoint = Endpoint::Tracks(track_id);
-    let auth = self.get_credentials()?;
-
-    let res = get_request_helper(&self.http_client, endpoint, auth)
-      .query(&[("CountryCode", self.country.unwrap().to_string())])
-      .send()?;
+    let query = &[("CountryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
     Ok(res.json()?)
   }
   fn playback_info_for_track(&self, track_id: &u64, options: &PlaybackInfoOptions) -> Result<Response> {
     let endpoint = Endpoint::TracksPlaybackinfo(track_id);
-    let auth = self.get_credentials()?;
     let query = &options.get_query_params();
-
-    get_request_helper(&self.http_client, endpoint, auth)
-      .header("x-tidal-prefetch", &options.prefetch.to_string())
-      .header("x-tidal-token", self.client_credentials.id())
-      .header("x-tidal-streamingsessionid", &self.streaming_session_id.to_string())
-      .query(query)
-      .send()
-      .map_err(Into::into)
+    let headers = &[
+      ("x-tidal-token", self.client_credentials.id()),
+      ("x-tidal-prefetch", &options.prefetch.to_string()),
+      ("x-tidal-streamingsessionid", &self.streaming_session_id.to_string()),
+    ];
+    let res = self.get_helper(endpoint, Some(query), None, Some(headers))?;
+    Ok(res)
   }
 }
 
