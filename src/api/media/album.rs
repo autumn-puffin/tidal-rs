@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::api::{AudioMode, AudioQuality};
 
-use super::{ArtistRelationship, MediaMetadata};
+use super::{Artist, MediaMetadata};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -13,9 +13,9 @@ pub struct Album {
   pub title: String,
   pub cover: Uuid,
   pub vibrant_color: String,
-  pub url: String,
+  pub url: Option<String>,
   pub video_cover: Option<String>,
-  pub artists: Vec<ArtistRelationship>,
+  pub artists: Vec<Artist>,
   pub audio_quality: AudioQuality,
   pub number_of_tracks: u64,
   pub number_of_videos: u64,
@@ -25,8 +25,8 @@ pub struct Album {
   pub explicit: bool,
   pub media_metadata: MediaMetadata,
   pub audio_modes: Vec<AudioMode>,
-  pub release_date: NaiveDate,
-  pub stream_start_date: DateTime<Utc>,
+  pub release_date: Option<NaiveDate>,
+  pub stream_start_date: Option<DateTime<Utc>>,
 
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
@@ -40,9 +40,9 @@ pub struct AlbumRelationship {
   pub title: String,
   pub cover: Uuid,
   pub vibrant_color: String,
-  pub url: String,
+  pub url: Option<String>,
   pub video_cover: Option<Uuid>,
-  pub release_date: NaiveDate,
+  pub release_date: Option<NaiveDate>,
 
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]

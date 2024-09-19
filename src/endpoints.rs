@@ -34,6 +34,10 @@ pub enum Endpoint<'a> {
   SessionsOfBearer,
   Pages(&'a str),
   Tracks(&'a u64),
+  TracksCredits(&'a u64),
+  TracksMix(&'a u64),
+  TracksLyrics(&'a u64),
+  TracksRecommendations(&'a u64),
   TracksPlaybackinfo(&'a u64),
 }
 impl Display for Endpoint<'_> {
@@ -49,6 +53,10 @@ impl Display for Endpoint<'_> {
       Self::UsersClients(id) => (base_urls::API_URL_V1, format!("users/{id}/clients")),
       Self::Pages(path) => (base_urls::API_URL_V1, format!("pages/{path}")),
       Self::Tracks(id) => (base_urls::API_URL_V1, format!("tracks/{id}")),
+      Self::TracksCredits(id) => (base_urls::API_URL_V1, format!("tracks/{id}/credits")),
+      Self::TracksMix(id) => (base_urls::API_URL_V1, format!("tracks/{id}/mix")),
+      Self::TracksLyrics(id) => (base_urls::API_URL_V1, format!("tracks/{id}/lyrics")),
+      Self::TracksRecommendations(id) => (base_urls::API_URL_V1, format!("tracks/{id}/recommendations")),
       Self::TracksPlaybackinfo(id) => (base_urls::API_URL_V1, format!("tracks/{id}/playbackinfo")),
     };
     write! {f, "{}{}", base, path}

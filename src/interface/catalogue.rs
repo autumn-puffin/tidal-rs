@@ -1,8 +1,5 @@
 use super::auth::Auth;
-use crate::{
-  api::{AssetPresentation, AudioQuality, Page, PlaybackMode},
-  Result,
-};
+use crate::{api::Page, Result};
 use isocountry::CountryCode;
 use url::Url;
 

@@ -4,6 +4,7 @@ pub mod album;
 pub mod article;
 pub mod artist;
 pub mod image;
+pub mod lyrics;
 pub mod mix;
 pub mod playlist;
 pub mod profile;
@@ -13,6 +14,7 @@ pub use album::*;
 pub use article::*;
 pub use artist::*;
 pub use image::*;
+pub use lyrics::*;
 pub use mix::*;
 pub use playlist::*;
 pub use profile::*;
@@ -36,6 +38,28 @@ pub enum MediaType {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub enum MediaItem {
+  Track(Track),
+  Video(Video),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MediaMetadata {
   pub tags: Vec<MediaTag>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MediaRecommendation {
+  #[serde(flatten)]
+  media: MediaItem,
+  sources: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MediaCredit {
+  pub r#type: String,
+  pub contributors: Vec<Artist>,
 }

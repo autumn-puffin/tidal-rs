@@ -11,7 +11,10 @@ pub use crate::interface::{
   users::*,
 };
 use crate::{
-  api::{Page, Paging, PlaybackInfo, PlaybackInfoOptions, Session, Track, User, UserClient, UserSubscription},
+  api::{
+    Lyrics, MediaCredit, MediaRecommendation, MixId, Page, Paging, PlaybackInfo, PlaybackInfoOptions, Session, Track, User, UserClient,
+    UserSubscription,
+  },
   endpoints::Endpoint,
   error::ApiErrorResponse,
   utils::{self, get_request_helper, oauth_request_helper, post_request_helper},
@@ -303,10 +306,47 @@ impl Catalogue for Client {
 impl TrackCatalogue for Client {
   fn get_track(&self, track_id: &u64) -> Result<Track> {
     let endpoint = Endpoint::Tracks(track_id);
-    let query = &[("CountryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
+    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
     let res = self.get_helper(endpoint, Some(query), None, None)?;
     Ok(res.json()?)
   }
+
+  fn get_track_credits(&self, track_id: &u64, limit: &u64, include_contributors: bool) -> Result<Vec<MediaCredit>> {
+    let endpoint = Endpoint::TracksCredits(track_id);
+    let query = &[
+      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
+      ("limit", &limit.to_string()),
+      ("includeContributors", &include_contributors.to_string()),
+    ];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
+    Ok(res.json()?)
+  }
+
+  fn get_track_mix_id(&self, track_id: &u64) -> Result<MixId> {
+    let endpoint = Endpoint::TracksMix(track_id);
+    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
+    Ok(res.json()?)
+  }
+
+  fn get_track_lyrics(&self, track_id: &u64) -> Result<Lyrics> {
+    let endpoint = Endpoint::TracksLyrics(track_id);
+    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
+
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
+    Ok(res.json()?)
+  }
+
+  fn get_track_recommendations(&self, track_id: &u64, limit: &u64) -> Result<Paging<MediaRecommendation>> {
+    let endpoint = Endpoint::TracksRecommendations(track_id);
+    let query: &[(&str, &str)] = &[
+      ("limit", &limit.to_string()),
+      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
+    ];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
+    Ok(res.json()?)
+  }
+
   fn playback_info_for_track(&self, track_id: &u64, options: &PlaybackInfoOptions) -> Result<PlaybackInfo> {
     let endpoint = Endpoint::TracksPlaybackinfo(track_id);
     let query = &options.get_query_params();

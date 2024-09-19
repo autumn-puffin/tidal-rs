@@ -5,6 +5,12 @@ use serde::{Deserialize, Serialize};
 use super::Image;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MixId {
+  pub id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum MixType {
   ArtistMix,
