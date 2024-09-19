@@ -11,7 +11,7 @@ pub use crate::interface::{
   users::*,
 };
 use crate::{
-  api::{Page, Paging, Session, Track, User, UserClient, UserSubscription},
+  api::{Page, Paging, PlaybackInfo, PlaybackInfoOptions, Session, Track, User, UserClient, UserSubscription},
   endpoints::Endpoint,
   error::ApiErrorResponse,
   utils::{self, get_request_helper, oauth_request_helper, post_request_helper},
@@ -307,7 +307,7 @@ impl TrackCatalogue for Client {
     let res = self.get_helper(endpoint, Some(query), None, None)?;
     Ok(res.json()?)
   }
-  fn playback_info_for_track(&self, track_id: &u64, options: &PlaybackInfoOptions) -> Result<Response> {
+  fn playback_info_for_track(&self, track_id: &u64, options: &PlaybackInfoOptions) -> Result<PlaybackInfo> {
     let endpoint = Endpoint::TracksPlaybackinfo(track_id);
     let query = &options.get_query_params();
     let headers = &[
@@ -316,7 +316,7 @@ impl TrackCatalogue for Client {
       ("x-tidal-streamingsessionid", &self.streaming_session_id.to_string()),
     ];
     let res = self.get_helper(endpoint, Some(query), None, Some(headers))?;
-    Ok(res)
+    Ok(res.json()?)
   }
 }
 

@@ -1,6 +1,6 @@
 use dotenvy_macro::dotenv;
 use tidal_rs::{
-  api::{AssetPresentation, AudioQuality, PlaybackMode},
+  api::{AssetPresentation, AudioQuality, PlaybackInfoOptions, PlaybackMode},
   client::{Client, ClientCreds},
   interface::{auth::*, catalogue::*},
 };
@@ -19,8 +19,8 @@ fn auth(client: &mut Client) {
 
 fn main() {
   let mut client = get_client();
-  let playback_info_options = PlaybackInfoOptions::new(AudioQuality::High, PlaybackMode::Stream, AssetPresentation::Full, false);
+  let playback_info_options = PlaybackInfoOptions::new(AudioQuality::HiResLossless, PlaybackMode::Stream, AssetPresentation::Full, false);
   auth(&mut client);
-  let res = client.playback_info_for_track(&20115566, &playback_info_options);
-  println!("{}", res.unwrap().text().unwrap());
+  let playback_info = client.playback_info_for_track(&20115566, &playback_info_options);
+  println!("{:#?}", playback_info);
 }
