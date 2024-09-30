@@ -5,5 +5,5 @@ use serde::{Deserialize, Serialize};
 pub struct Video {
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
-  pub unserialized: std::collections::HashMap<String, serde_json::Value>,
+  pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }

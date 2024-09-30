@@ -12,7 +12,7 @@ pub struct Page {
   pub rows: Vec<PageRow>,
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
-  pub unserialized: std::collections::HashMap<String, serde_json::Value>,
+  pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -21,7 +21,7 @@ pub struct PageRow {
   pub modules: Vec<PageModule>,
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
-  pub unserialized: std::collections::HashMap<String, serde_json::Value>,
+  pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -42,7 +42,7 @@ pub struct PageModule {
 
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
-  pub unserialized: std::collections::HashMap<String, serde_json::Value>,
+  pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -61,5 +61,5 @@ pub struct PageItem {
   pub image_id: Option<String>,
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
-  pub unserialized: std::collections::HashMap<String, serde_json::Value>,
+  pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }

@@ -17,7 +17,7 @@ pub struct Artist {
   pub mixes: MixList,
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
-  pub unserialized: std::collections::HashMap<String, serde_json::Value>,
+  pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
