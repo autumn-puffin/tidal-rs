@@ -27,3 +27,6 @@ serde_path_to_error = "0.1"
 [features]
 default = ["show_unmodeled"]
 show_unmodeled = []
+
+[workspace]
+members = ["tidal-rs_playground"]
