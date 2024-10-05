@@ -75,6 +75,22 @@ impl Client {
     self.country = Some(country);
   }
 
+  pub fn get_client_credentials(&self) -> &ClientCreds {
+    &self.client_credentials
+  }
+  pub fn get_auth_credentials(&self) -> Option<&AuthCreds> {
+    self.auth_credentials.as_ref()
+  }
+  pub fn get_scopes(&self) -> &[String] {
+    &self.scopes
+  }
+  pub fn get_country_code(&self) -> Option<&CountryCode> {
+    self.country.as_ref()
+  }
+  pub fn get_streaming_session_id(&self) -> &Uuid {
+    &self.streaming_session_id
+  }
+
   pub fn get_page_response(&self, page: &str) -> Result<Response> {
     let endpoint = Endpoint::Pages(page);
     let auth = self.get_credentials()?;
