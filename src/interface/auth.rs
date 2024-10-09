@@ -56,7 +56,7 @@ pub trait Auth {
 /// implementation of the `RefreshFlow` trait
 pub trait Credentials: RefreshFlow {
   /// Retuns the time at which the credentials expire, formatted as a unix timestamp
-  fn expires_at(&self) -> u64;
+  fn expires_at(&self) -> i64;
   /// Returns the country code of the user associated with the credentials, if any
   fn country_code(&self) -> Option<&CountryCode>;
   /// Returns the id of the user associated with the credentials, if any
