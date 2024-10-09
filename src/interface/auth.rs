@@ -38,7 +38,7 @@ pub trait Auth {
     let credentials = self.get_credentials_mut()?;
     let expire_time = credentials.expires_at();
 
-    let cur_time = Utc::now().timestamp() as u64;
+    let cur_time = Utc::now().timestamp();
     if expire_time <= cur_time {
       credentials.refresh()?;
     }
