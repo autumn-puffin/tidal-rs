@@ -17,7 +17,7 @@ fn main() -> eframe::Result {
         Event::AuthWithDeviceFlow => {
           let mut client = client_mutex.lock().unwrap();
           let dev_res = client.device_login_init().unwrap();
-          println!("Please Go To https://{}\n", dev_res.verification_uri_complete);
+          open::that_in_background(&dev_res.verification_uri_complete);
           client.device_login_finalize(&dev_res).unwrap();
           println!("Logged in as: {:?}\n", client.get_credentials().unwrap().user_id());
         }

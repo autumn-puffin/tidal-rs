@@ -8,3 +8,4 @@ tidal-rs = { path = "../" }
 eframe = "0.29"
 egui = "0.29"
 dotenvy_macro = "0.15"
+open = "5.3"
