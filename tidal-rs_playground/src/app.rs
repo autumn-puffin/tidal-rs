@@ -13,17 +13,8 @@ impl App {
     Self { event_sender, client }
   }
 }
-impl eframe::App for App {
-  fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
-    egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-      ui.horizontal(|ui| {
-        ui.label("TOP PANEL");
-      });
-    });
-    egui::SidePanel::left("left_panel").show(ctx, |ui| {
-      ui.label("LEFT PANEL");
-    });
-    egui::SidePanel::right("auth_panel").show(ctx, |ui| {
+impl App {
+  fn draw_auth_panel(&self, ui: &mut egui::Ui) {
       ui.label("Auth Panel");
       ui.button("Auth with Device Flow")
         .on_hover_text("Authenticates with the device flow")
@@ -54,13 +45,14 @@ impl eframe::App for App {
               ui.label(&user.username);
               ui.end_row();
               ui.label("User ID");
-              ui.label(&user.user_id.to_string());
+            ui.label(user.user_id.to_string());
               ui.end_row();
               ui.label("User Email");
               ui.label(&user.email);
               ui.end_row();
               ui.label("User Country");
               ui.label(user.country_code.name());
+            ui.end_row();
             } else {
               ui.label("No User");
               ui.end_row();
@@ -71,7 +63,19 @@ impl eframe::App for App {
           }
         });
       });
+  }
+}
+impl eframe::App for App {
+  fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
+    egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+      ui.horizontal(|ui| {
+        ui.label("TOP PANEL");
+      });
     });
+    egui::SidePanel::left("left_panel").show(ctx, |ui| {
+      ui.label("LEFT PANEL");
+    });
+    egui::SidePanel::right("auth_panel").show(ctx, |ui| self.draw_auth_panel(ui));
     egui::CentralPanel::default().show(ctx, |ui| {
       ui.label("CENTRAL PANEL");
     });
