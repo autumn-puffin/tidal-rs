@@ -1,8 +1,9 @@
+use crate::Event;
 use std::sync::{mpsc, Arc, Mutex};
-
 use tidal_rs::client::Client;
 
-use crate::Event;
+mod custom_ui;
+use custom_ui::*;
 
 pub struct App {
   event_sender: mpsc::Sender<Event>,
@@ -15,54 +16,36 @@ impl App {
 }
 impl App {
   fn draw_auth_panel(&self, ui: &mut egui::Ui) {
-      ui.label("Auth Panel");
-      ui.button("Auth with Device Flow")
-        .on_hover_text("Authenticates with the device flow")
-        .clicked()
-        .then(|| self.event_sender.send(Event::AuthWithDeviceFlow).unwrap());
-      egui::ScrollArea::horizontal().max_width(250.).show(ui, |ui| {
-        egui::Grid::new("auth_grid").num_columns(2).striped(true).show(ui, |ui| {
-          let client = self.client.lock().unwrap();
-          ui.label("Client ID");
-          ui.label(client.get_client_credentials().id());
-          ui.end_row();
-          ui.label("Client Secret");
-          ui.label(client.get_client_credentials().secret());
-          ui.end_row();
+    ui.label("Auth Panel");
+    ui.button("Auth with Device Flow")
+      .on_hover_text("Authenticates with the device flow")
+      .clicked()
+      .then(|| self.event_sender.send(Event::AuthWithDeviceFlow).unwrap());
+    egui::ScrollArea::horizontal().max_width(250.).show(ui, |ui| {
+      egui::Grid::new("auth_grid").num_columns(2).striped(true).show(ui, |ui| {
+        let client = self.client.lock().unwrap();
+        kv_row(ui, ("Client ID", client.get_client_credentials().id()));
+        kv_row(ui, ("Client Secret", client.get_client_credentials().secret()));
 
-          if let Some(auth_creds) = client.get_auth_credentials() {
-            ui.label("Access Token");
-            ui.label(auth_creds.access_token());
-            ui.end_row();
-            ui.label("Refresh Token");
-            ui.label(auth_creds.refresh_token().unwrap_or("None"));
-            ui.end_row();
-            ui.label("Expires At");
-            ui.label(auth_creds.expires_at().to_string());
-            ui.end_row();
-            if let Some(user) = auth_creds.auth_user() {
-              ui.label("Username");
-              ui.label(&user.username);
-              ui.end_row();
-              ui.label("User ID");
-            ui.label(user.user_id.to_string());
-              ui.end_row();
-              ui.label("User Email");
-              ui.label(&user.email);
-              ui.end_row();
-              ui.label("User Country");
-              ui.label(user.country_code.name());
-            ui.end_row();
-            } else {
-              ui.label("No User");
-              ui.end_row();
-            }
+        if let Some(auth_creds) = client.get_auth_credentials() {
+          kv_row(ui, ("Access Token", auth_creds.access_token()));
+          kv_row(ui, ("Refresh Token", auth_creds.refresh_token().unwrap_or("None")));
+          kv_row(ui, ("Expires At", auth_creds.expires_at().to_string()));
+          if let Some(user) = auth_creds.auth_user() {
+            kv_row(ui, ("Username", &user.username));
+            kv_row(ui, ("User ID", user.user_id.to_string()));
+            kv_row(ui, ("User Email", &user.email));
+            kv_row(ui, ("User Country", user.country_code.name()));
           } else {
-            ui.label("No Auth Creds");
+            ui.label("No User");
             ui.end_row();
           }
-        });
+        } else {
+          ui.label("No Auth Creds");
+          ui.end_row();
+        }
       });
+    });
   }
 }
 impl eframe::App for App {
