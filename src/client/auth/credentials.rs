@@ -21,12 +21,12 @@ pub struct AuthCreds {
 
   access_token: Token,
   scope: String,
-  expires_in: u64,
+  expires_in: i64,
   refresh_token: Option<Token>,
   user_id: Option<u64>,
   user: Option<AuthUser>,
 
-  received_at: u64,
+  received_at: i64,
 }
 impl AuthCreds {
   pub fn new(grant_type: GrantType, client_credentials: ClientCreds, response: TokenResponse) -> Self {
@@ -48,13 +48,13 @@ impl AuthCreds {
       scope,
       expires_in,
       refresh_token: refresh_token.map(Token::from),
-      received_at: Utc::now().timestamp() as u64,
+      received_at: Utc::now().timestamp(),
     }
   }
   pub fn country_code(&self) -> Option<&CountryCode> {
     Some(&self.user.as_ref()?.country_code)
   }
-  pub fn expires_at(&self) -> u64 {
+  pub fn expires_at(&self) -> i64 {
     self.received_at + self.expires_in
   }
   pub fn access_token(&self) -> &str {
@@ -111,7 +111,7 @@ impl AuthCreds {
   }
 }
 impl Credentials for AuthCreds {
-  fn expires_at(&self) -> u64 {
+  fn expires_at(&self) -> i64 {
     AuthCreds::expires_at(self)
   }
   fn country_code(&self) -> Option<&CountryCode> {

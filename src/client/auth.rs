@@ -21,7 +21,7 @@ pub use credentials::AuthCreds;
 pub struct TokenResponse {
   access_token: String,
   scope: String,
-  expires_in: u64,
+  expires_in: i64,
   #[serde(default)]
   user_id: Option<u64>,
   user: Option<AuthUser>,
@@ -90,7 +90,7 @@ impl AuthClient {
   pub fn get_credentials(&mut self) -> Result<&AuthCreds> {
     let credentials = self.credentials.as_mut().ok_or(AuthError::Unauthenticated)?;
     let expire_time = credentials.expires_at();
-    let cur_time = Utc::now().timestamp() as u64;
+    let cur_time = Utc::now().timestamp();
     if expire_time <= cur_time {
       credentials.refresh()?;
     }

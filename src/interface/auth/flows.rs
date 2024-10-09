@@ -42,12 +42,12 @@ pub trait DeviceFlow {
     let interval = response.interval;
     let max_retries = response.expires_in / interval;
 
-    let mut i: u64 = 0;
+    let mut i: i64 = 0;
     while i < max_retries {
       match self.try_device_login_finalize(response) {
         Err(Error::AuthError(super::AuthError::AuthorizationPending)) => {
           i += 1;
-          std::thread::sleep(std::time::Duration::from_secs(interval));
+          std::thread::sleep(std::time::Duration::from_secs(interval as u64));
         }
         res => return res,
       }
@@ -77,6 +77,6 @@ pub struct DeviceFlowResponse {
   pub user_code: String,
   pub verification_uri: String,
   pub verification_uri_complete: String,
-  pub expires_in: u64,
-  pub interval: u64,
+  pub expires_in: i64,
+  pub interval: i64,
 }
