@@ -49,8 +49,23 @@ impl eframe::App for App {
             ui.label("Expires At");
             ui.label(auth_creds.expires_at().to_string());
             ui.end_row();
+            if let Some(user) = auth_creds.auth_user() {
+              ui.label("Username");
+              ui.label(&user.username);
+              ui.end_row();
+              ui.label("User ID");
+              ui.label(&user.user_id.to_string());
+              ui.end_row();
+              ui.label("User Email");
+              ui.label(&user.email);
+              ui.end_row();
+              ui.label("User Country");
+              ui.label(user.country_code.name());
+            } else {
+              ui.label("No User");
+              ui.end_row();
+            }
           } else {
-            ui.label("Auth Creds");
             ui.label("No Auth Creds");
             ui.end_row();
           }
