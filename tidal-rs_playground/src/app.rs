@@ -30,7 +30,10 @@ impl App {
         if let Some(auth_creds) = client.get_auth_credentials() {
           kv_row(ui, ("Access Token", auth_creds.access_token()));
           kv_row(ui, ("Refresh Token", auth_creds.refresh_token().unwrap_or("None")));
-          kv_row(ui, ("Expires At", auth_creds.expires_at().to_string()));
+          let expires_at = chrono::DateTime::from_timestamp(auth_creds.expires_at(), 0)
+            .map(|dt| dt.to_string())
+            .unwrap_or("None".to_string());
+          kv_row(ui, ("Expires At", expires_at));
           if let Some(user) = auth_creds.auth_user() {
             kv_row(ui, ("Username", &user.username));
             kv_row(ui, ("User ID", user.user_id.to_string()));
