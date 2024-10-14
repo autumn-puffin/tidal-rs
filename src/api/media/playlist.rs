@@ -15,9 +15,9 @@ pub struct Playlist {
   pub number_of_videos: u64,
   pub duration: u64,
   pub promoted_artists: Vec<Artist>,
-  pub image: Uuid,
-  pub square_image: Uuid,
-  pub last_item_added_at: DateTime<Utc>,
+  pub image: Option<Uuid>,
+  pub square_image: Option<Uuid>,
+  pub last_item_added_at: Option<DateTime<Utc>>,
   pub r#type: PlaylistType,
 
   #[cfg(feature = "show_unmodeled")]
