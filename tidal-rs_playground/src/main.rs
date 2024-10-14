@@ -68,6 +68,7 @@ fn init_client() -> Client {
   let mut client = Client::new(creds);
   if let Ok(auth_json) = fs::read_to_string("./auth.json") {
     if let Ok(auth) = serde_json::from_str::<AuthCreds>(&auth_json) {
+      client.set_country(*auth.country_code().unwrap());
       client.set_auth_credentials(auth);
     };
   }
