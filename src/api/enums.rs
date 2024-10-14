@@ -40,6 +40,7 @@ pub enum PaymentType {
   Fortumo,
   GooglePlayBilling,
   Paypal,
+  Parent,
   Venmo,
   Vivo,
 }
