@@ -1,16 +1,16 @@
-use std::sync::{mpsc, Arc, Mutex};
+use std::{
+  fs,
+  sync::{mpsc, Arc, Mutex},
+};
 
-use tidal_rs::client::{Auth, Catalogue, DeviceFlow};
+use tidal_rs::client::{auth::AuthCreds, Auth, Catalogue, Client, ClientCreds, DeviceFlow};
 use tidal_rs_playground::{AppEvent, BackgroundEvent};
 
 fn main() -> eframe::Result {
   let (background_event_sender, background_event_receiver) = mpsc::channel::<BackgroundEvent>();
   let (app_event_sender, app_event_receiver) = mpsc::channel::<AppEvent>();
 
-  let client = Arc::new(Mutex::new(tidal_rs::client::Client::new(tidal_rs::client::ClientCreds::new(
-    dotenvy_macro::dotenv!("ClientID").to_owned(),
-    dotenvy_macro::dotenv!("ClientSecret").to_owned(),
-  ))));
+  let client = Arc::new(Mutex::new(init_client()));
 
   let client_mutex = client.clone();
   std::thread::spawn(move || {
@@ -53,4 +53,19 @@ fn main() -> eframe::Result {
       )))
     }),
   )
+}
+
+fn init_client() -> Client {
+  let creds = ClientCreds::new(
+    dotenvy_macro::dotenv!("ClientID").to_owned(),
+    dotenvy_macro::dotenv!("ClientSecret").to_owned(),
+  );
+  let mut client = Client::new(creds);
+  if let Ok(auth_json) = fs::read_to_string("./auth.json") {
+    if let Ok(auth) = serde_json::from_str::<AuthCreds>(&auth_json) {
+      client.set_auth_credentials(auth);
+    };
+  }
+
+  client
 }

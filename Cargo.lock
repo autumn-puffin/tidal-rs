@@ -3338,6 +3338,8 @@ dependencies = [
  "eframe",
  "egui",
  "open",
+ "serde",
+ "serde_json",
  "tidal-rs",
 ]
 
