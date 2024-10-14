@@ -1,5 +1,6 @@
 use std::{
-  fs,
+  fs::{self, File},
+  io::Write as _,
   sync::{mpsc, Arc, Mutex},
 };
 
@@ -25,6 +26,10 @@ fn main() -> eframe::Result {
           open::that_in_background(&dev_res.verification_uri_complete);
           client.device_login_finalize(&dev_res).unwrap();
           println!("Logged in as: {:?}\n", client.get_credentials().unwrap().user_id());
+          let auth = client.get_auth_credentials().unwrap();
+          let creds_json = serde_json::to_string_pretty(&auth).unwrap();
+          let mut file = File::create("auth.json").unwrap();
+          file.write_all(creds_json.as_bytes()).unwrap();
         }
         CatalogueGetPage(page) => {
           let client = client_mutex.lock().unwrap();
