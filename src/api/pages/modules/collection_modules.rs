@@ -66,7 +66,7 @@ pub struct TrackCollectionModule {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VideoCollectionModule {
-  pub layout: Layout,
+  pub layout: Option<Layout>,
   #[serde(flatten)]
   pub collection: CollectionModule<Video>,
 }
