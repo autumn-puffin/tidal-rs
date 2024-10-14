@@ -51,7 +51,7 @@ pub struct MixCollectionModule {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlaylistCollectionModule {
-  pub playlist_style: PlaylistStyle,
+  pub playlist_style: Option<PlaylistStyle>,
   #[serde(flatten)]
   pub collection: CollectionModule<Playlist>,
 }
