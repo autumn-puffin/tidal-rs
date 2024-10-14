@@ -74,6 +74,9 @@ impl Client {
   pub fn set_country(&mut self, country: CountryCode) {
     self.country = Some(country);
   }
+  pub fn set_auth_credentials(&mut self, auth_credentials: AuthCreds) {
+    self.auth_credentials = Some(auth_credentials)
+  }
 
   pub fn get_client_credentials(&self) -> &ClientCreds {
     &self.client_credentials
