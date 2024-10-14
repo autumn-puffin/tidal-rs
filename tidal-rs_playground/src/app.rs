@@ -102,7 +102,10 @@ impl App {
           })
         });
         egui::ScrollArea::vertical().max_height(250.).min_scrolled_height(250.).show(ui, |ui| {
-          egui::Frame::dark_canvas(ui.style()).show(ui, |ui| ui.add(Label::new(interface_state.page.clone().unwrap_or("No Page".to_owned()))));
+          egui::Frame::dark_canvas(ui.style()).show(ui, |ui| {
+            ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
+            ui.add(Label::new(interface_state.page.clone().unwrap_or("No Page".to_owned())));
+          });
         });
       }
       Some(InterfaceSelection::Track) => {
