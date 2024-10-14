@@ -2,3 +2,4 @@
 /target
 .env
 auth.json
+page.json
