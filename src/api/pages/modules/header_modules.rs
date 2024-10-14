@@ -18,7 +18,7 @@ pub struct ArtistHeaderModule {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AlbumHeaderModule {
-  pub albums: Album,
+  pub album: Album,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
