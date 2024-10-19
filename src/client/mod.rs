@@ -96,12 +96,9 @@ impl Client {
 
   pub fn get_page_response(&self, page: &str) -> Result<Response> {
     let endpoint = Endpoint::Pages(page);
-    let auth = self.get_credentials()?;
+    let query = &[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")];
 
-    get_request_helper(&self.http_client, endpoint, auth)
-      .query(&[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")])
-      .send()
-      .map_err(Into::into)
+    self.get_helper(endpoint, Some(query), None, None)
   }
 }
 impl Client {
