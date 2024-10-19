@@ -41,9 +41,6 @@ pub fn request_helper<'a>(client: &Client, method: Method, endpoint: Endpoint, a
 pub fn post_request_helper<'a>(client: &Client, endpoint: Endpoint, auth: impl Into<RequestAuth<'a>>) -> RequestBuilder {
   request_helper(client, Method::POST, endpoint, auth)
 }
-pub fn get_request_helper<'a>(client: &Client, endpoint: Endpoint, auth: impl Into<RequestAuth<'a>>) -> RequestBuilder {
-  request_helper(client, Method::GET, endpoint, auth)
-}
 pub fn oauth_request_helper<'a>(
   client: &Client,
   endpoint: Endpoint,
@@ -78,4 +75,11 @@ pub fn new_pkce_pair() -> (String, String) {
   let challenge = BASE64_URL_SAFE_NO_PAD.encode(digest);
 
   (challenge, verifier)
+}
+
+pub fn res_to_error(res: reqwest::blocking::Response) -> crate::Error {
+  match res.status() {
+    reqwest::StatusCode::UNAUTHORIZED => crate::client::AuthError::Unauthenticated.into(),
+    _ => crate::Error::ApiError(res.json().unwrap()),
+  }
 }

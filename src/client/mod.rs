@@ -16,9 +16,7 @@ use crate::{
     UserSubscription,
   },
   endpoints::Endpoint,
-  error::ApiErrorResponse,
-  utils::{self, get_request_helper, oauth_request_helper, post_request_helper},
-  Result,
+  utils, Result,
 };
 use isocountry::CountryCode;
 use reqwest::{
@@ -96,20 +94,17 @@ impl Client {
 
   pub fn get_page_response(&self, page: &str) -> Result<Response> {
     let endpoint = Endpoint::Pages(page);
-    let auth = self.get_credentials()?;
+    let query = &[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")];
 
-    get_request_helper(&self.http_client, endpoint, auth)
-      .query(&[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")])
-      .send()
-      .map_err(Into::into)
+    self.get_helper(endpoint, Some(query), None, None)
   }
 }
 impl Client {
   fn oauth_helper(&mut self, endpoint: Endpoint, grant: GrantType, params: Option<&[(&str, &str)]>) -> Result<()> {
     let client_creds = &self.client_credentials;
-    let res = oauth_request_helper(&self.http_client, endpoint, grant, client_creds, params).send()?;
+    let res = utils::oauth_request_helper(&self.http_client, endpoint, grant, client_creds, params).send()?;
     if !res.status().is_success() {
-      return Err(res.json::<ApiErrorResponse>()?.into());
+      return Err(utils::res_to_error(res));
     }
     let auth_creds = AuthCreds::new(grant, self.client_credentials.clone(), res.json::<TokenResponse>()?);
     let country = auth_creds.auth_user().map(|user| user.country_code);
@@ -128,15 +123,18 @@ impl Client {
     let auth = self.get_credentials()?;
     let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
     let headers = HeaderMap::try_from(headers).unwrap();
-    self
+    let res = self
       .http_client
       .get(endpoint.to_string())
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
       .headers(headers)
       .bearer_auth(auth.access_token())
-      .send()
-      .map_err(Into::into)
+      .send()?;
+    if !res.status().is_success() {
+      return Err(utils::res_to_error(res));
+    }
+    Ok(res)
   }
   fn post_helper(
     &self,
@@ -148,15 +146,18 @@ impl Client {
     let auth = self.get_credentials()?;
     let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
     let headers = HeaderMap::try_from(headers).unwrap();
-    self
+    let res = self
       .http_client
       .post(endpoint.to_string())
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
       .headers(headers)
       .bearer_auth(auth.access_token())
-      .send()
-      .map_err(Into::into)
+      .send()?;
+    if !res.status().is_success() {
+      return Err(utils::res_to_error(res));
+    }
+    Ok(res)
   }
   fn delete_helper(
     &self,
@@ -168,15 +169,18 @@ impl Client {
     let auth = self.get_credentials()?;
     let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
     let headers = HeaderMap::try_from(headers).unwrap();
-    self
+    let res = self
       .http_client
       .delete(endpoint.to_string())
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
       .headers(headers)
       .bearer_auth(auth.access_token())
-      .send()
-      .map_err(Into::into)
+      .send()?;
+    if !res.status().is_success() {
+      return Err(utils::res_to_error(res));
+    }
+    Ok(res)
   }
 }
 impl Auth for Client {
@@ -251,11 +255,9 @@ impl UserFlow for Client {
 impl DeviceFlow for Client {
   fn device_login_init(&self) -> Result<crate::interface::auth::flows::DeviceFlowResponse> {
     let endpoint = Endpoint::OAuth2DeviceAuth;
-    let client_credentials = &self.client_credentials;
-
     let params = &[("scope", "r_usr+w_usr+w_sub"), ("client_id", self.client_credentials.id())];
 
-    let res = post_request_helper(&self.http_client, endpoint, client_credentials).form(params).send()?;
+    let res = self.post_helper(endpoint, None, Some(params), None)?;
     Ok(res.json()?)
   }
 
