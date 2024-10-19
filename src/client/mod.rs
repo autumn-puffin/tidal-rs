@@ -128,15 +128,18 @@ impl Client {
     let auth = self.get_credentials()?;
     let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
     let headers = HeaderMap::try_from(headers).unwrap();
-    self
+    let res = self
       .http_client
       .get(endpoint.to_string())
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
       .headers(headers)
       .bearer_auth(auth.access_token())
-      .send()
-      .map_err(Into::into)
+      .send()?;
+    if !res.status().is_success() {
+      return Err(res.json::<ApiErrorResponse>()?.into());
+    }
+    Ok(res)
   }
   fn post_helper(
     &self,
@@ -148,15 +151,18 @@ impl Client {
     let auth = self.get_credentials()?;
     let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
     let headers = HeaderMap::try_from(headers).unwrap();
-    self
+    let res = self
       .http_client
       .post(endpoint.to_string())
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
       .headers(headers)
       .bearer_auth(auth.access_token())
-      .send()
-      .map_err(Into::into)
+      .send()?;
+    if !res.status().is_success() {
+      return Err(res.json::<ApiErrorResponse>()?.into());
+    }
+    Ok(res)
   }
   fn delete_helper(
     &self,
@@ -168,15 +174,18 @@ impl Client {
     let auth = self.get_credentials()?;
     let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
     let headers = HeaderMap::try_from(headers).unwrap();
-    self
+    let res = self
       .http_client
       .delete(endpoint.to_string())
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
       .headers(headers)
       .bearer_auth(auth.access_token())
-      .send()
-      .map_err(Into::into)
+      .send()?;
+    if !res.status().is_success() {
+      return Err(res.json::<ApiErrorResponse>()?.into());
+    }
+    Ok(res)
   }
 }
 impl Auth for Client {
