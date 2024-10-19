@@ -17,7 +17,7 @@ use crate::{
   },
   endpoints::Endpoint,
   error::ApiErrorResponse,
-  utils::{self, get_request_helper, oauth_request_helper, post_request_helper},
+  utils::{self, oauth_request_helper, post_request_helper},
   Result,
 };
 use isocountry::CountryCode;
