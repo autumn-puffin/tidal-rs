@@ -16,7 +16,6 @@ use crate::{
     UserSubscription,
   },
   endpoints::Endpoint,
-  error::ApiErrorResponse,
   utils, Result,
 };
 use isocountry::CountryCode;
@@ -105,7 +104,7 @@ impl Client {
     let client_creds = &self.client_credentials;
     let res = utils::oauth_request_helper(&self.http_client, endpoint, grant, client_creds, params).send()?;
     if !res.status().is_success() {
-      return Err(res.json::<ApiErrorResponse>()?.into());
+      return Err(utils::res_to_error(res));
     }
     let auth_creds = AuthCreds::new(grant, self.client_credentials.clone(), res.json::<TokenResponse>()?);
     let country = auth_creds.auth_user().map(|user| user.country_code);
@@ -133,7 +132,7 @@ impl Client {
       .bearer_auth(auth.access_token())
       .send()?;
     if !res.status().is_success() {
-      return Err(res.json::<ApiErrorResponse>()?.into());
+      return Err(utils::res_to_error(res));
     }
     Ok(res)
   }
@@ -156,7 +155,7 @@ impl Client {
       .bearer_auth(auth.access_token())
       .send()?;
     if !res.status().is_success() {
-      return Err(res.json::<ApiErrorResponse>()?.into());
+      return Err(utils::res_to_error(res));
     }
     Ok(res)
   }
@@ -179,7 +178,7 @@ impl Client {
       .bearer_auth(auth.access_token())
       .send()?;
     if !res.status().is_success() {
-      return Err(res.json::<ApiErrorResponse>()?.into());
+      return Err(utils::res_to_error(res));
     }
     Ok(res)
   }

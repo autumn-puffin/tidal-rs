@@ -76,3 +76,10 @@ pub fn new_pkce_pair() -> (String, String) {
 
   (challenge, verifier)
 }
+
+pub fn res_to_error(res: reqwest::blocking::Response) -> crate::Error {
+  match res.status() {
+    reqwest::StatusCode::UNAUTHORIZED => crate::client::AuthError::Unauthenticated.into(),
+    _ => crate::Error::ApiError(res.json().unwrap()),
+  }
+}
