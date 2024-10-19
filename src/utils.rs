@@ -41,9 +41,6 @@ pub fn request_helper<'a>(client: &Client, method: Method, endpoint: Endpoint, a
 pub fn post_request_helper<'a>(client: &Client, endpoint: Endpoint, auth: impl Into<RequestAuth<'a>>) -> RequestBuilder {
   request_helper(client, Method::POST, endpoint, auth)
 }
-pub fn get_request_helper<'a>(client: &Client, endpoint: Endpoint, auth: impl Into<RequestAuth<'a>>) -> RequestBuilder {
-  request_helper(client, Method::GET, endpoint, auth)
-}
 pub fn oauth_request_helper<'a>(
   client: &Client,
   endpoint: Endpoint,
