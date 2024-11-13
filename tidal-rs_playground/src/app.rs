@@ -94,7 +94,6 @@ impl App {
         ui.horizontal(|ui| {
           ui.add(TextEdit::singleline(&mut interface_state.page_path).desired_width(100.));
           ui.button("Get").on_hover_text("Get the specified page").clicked().then(|| {
-            println!("Getting page: {}", interface_state.page_path);
             self
               .event_sender
               .send(BackgroundEvent::CatalogueGetPage(interface_state.page_path.clone()))
