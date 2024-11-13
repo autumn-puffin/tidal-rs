@@ -12,6 +12,11 @@ pub enum Error {
   ApiError(ApiErrorResponse),
   UrlParseError(url::ParseError),
 }
+impl Error {
+  pub fn is_unauthenticated(&self) -> bool {
+    matches!(self, Self::AuthError(AuthError::Unauthenticated))
+  }
+}
 impl From<AuthError> for Error {
   fn from(err: AuthError) -> Self {
     Error::AuthError(err)
