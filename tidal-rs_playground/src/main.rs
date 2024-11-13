@@ -7,7 +7,10 @@ use std::{
   },
 };
 
-use tidal_rs::client::{auth::AuthCreds, Auth, Catalogue, Client, ClientCreds, DeviceFlow};
+use tidal_rs::{
+  client::{auth::AuthCreds, Auth, AuthError, Catalogue, Client, ClientCreds, DeviceFlow, RefreshFlow as _},
+  Error,
+};
 use tidal_rs_playground::{AppEvent, BackgroundEvent};
 
 fn main() -> eframe::Result {
@@ -65,12 +68,19 @@ fn event_handler(client: Arc<Mutex<Client>>, receiver: Receiver<BackgroundEvent>
         file.write_all(creds_json.as_bytes()).unwrap();
       }
       CatalogueGetPage(page) => {
-        let client_locked = client.lock().unwrap();
+        let mut client_locked = client.lock().unwrap();
         let res = client_locked.get_page(&page);
-        drop(client_locked);
         match res {
           Ok(response) => {
             sender.send(AppEvent::SetCataloguePage(response)).unwrap();
+          }
+          Err(Error::AuthError(AuthError::Unauthenticated)) => {
+            if client_locked.get_auth_credentials().map(|auth| auth.refresh_token()).is_some() {
+              println!("Refreshing credentials");
+              let _ = client_locked.refresh();
+            } else {
+              println!("Not authenticated, please authenticate first");
+            }
           }
           Err(e) => println!("Error getting page: {e:?}"),
         }
