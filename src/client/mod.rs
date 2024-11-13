@@ -91,7 +91,26 @@ impl Client {
   pub fn get_streaming_session_id(&self) -> &Uuid {
     &self.streaming_session_id
   }
+  pub fn can_refresh(&self) -> bool {
+    self.auth_credentials.as_ref().map_or(false, |creds| creds.refresh_token().is_some())
+  }
 
+  pub fn map_refresh<F, T>(&mut self, mut func: F) -> Result<T>
+  where
+    F: FnMut(&mut Self) -> Result<T>,
+  {
+    match func(self) {
+      Ok(val) => Ok(val),
+      Err(e) => {
+        if e.is_unauthenticated() && self.can_refresh() {
+          self.refresh()?;
+          func(self)
+        } else {
+          Err(e)
+        }
+      }
+    }
+  }
   pub fn get_page_response(&self, page: &str) -> Result<Response> {
     let endpoint = Endpoint::Pages(page);
     let query = &[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")];
