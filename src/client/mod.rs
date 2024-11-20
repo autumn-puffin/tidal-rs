@@ -46,6 +46,7 @@ pub struct Client {
   streaming_session_id: Uuid,
 }
 impl Client {
+  /// Create a new `Client` with the given `ClientCreds`
   pub fn new(client_credentials: ClientCreds) -> Self {
     let credentials = client_credentials;
     let streaming_session_id = Uuid::new_v4();
@@ -60,41 +61,59 @@ impl Client {
       streaming_session_id,
     }
   }
+  /// Create an `AuthClient` from the `Client`
   pub fn as_auth(&self) -> AuthClient {
     AuthClient::new(self.client_credentials.clone())
   }
+  /// Create a `CatalogueClient` from the `Client`
   pub fn as_catalogue(&self) -> CatalogueClient {
     CatalogueClient::new(self.client_credentials.clone())
   }
+  /// Set the redirect uri for code flow auth
   pub fn set_redirect_uri(&mut self, uri: String) {
     self.redirect_uri = Some(uri);
   }
+  /// set the country code for the client
   pub fn set_country(&mut self, country: CountryCode) {
     self.country = Some(country);
   }
+  /// Set the auth credentials for the client
   pub fn set_auth_credentials(&mut self, auth_credentials: AuthCreds) {
     self.auth_credentials = Some(auth_credentials)
   }
-
+  /// get the client credentials of the `Client`
   pub fn get_client_credentials(&self) -> &ClientCreds {
     &self.client_credentials
   }
+  /// get the auth credentials of the `Client`
   pub fn get_auth_credentials(&self) -> Option<&AuthCreds> {
     self.auth_credentials.as_ref()
   }
+  /// get the scopes of the `Client`
   pub fn get_scopes(&self) -> &[String] {
     &self.scopes
   }
+  /// get the country code of the `Client`
   pub fn get_country_code(&self) -> Option<&CountryCode> {
     self.country.as_ref()
   }
+  /// get the streaming session id of the `Client`
   pub fn get_streaming_session_id(&self) -> &Uuid {
     &self.streaming_session_id
   }
+  /// return true if the client is authrnticated and has a refresh token
   pub fn can_refresh(&self) -> bool {
     self.auth_credentials.as_ref().map_or(false, |creds| creds.refresh_token().is_some())
   }
-
+  /// run a closure that may need to refresh the auth token 
+  /// 
+  /// ```rust
+  /// let closure = |c: &mut Client| -> Result<Page> { c.get_page("home") }
+  /// 
+  /// let page = client.map_refresh(closure)?;
+  /// // if an unauthenticated error is returned from map_refresh, the session is unable to be refreshed
+  /// 
+  /// ```
   pub fn map_refresh<F, T>(&mut self, mut func: F) -> Result<T>
   where
     F: FnMut(&mut Self) -> Result<T>,
@@ -111,6 +130,7 @@ impl Client {
       }
     }
   }
+  /// get a page as a `Response`
   pub fn get_page_response(&self, page: &str) -> Result<Response> {
     let endpoint = Endpoint::Pages(page);
     let query = &[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")];
@@ -119,6 +139,7 @@ impl Client {
   }
 }
 impl Client {
+  /// Helper function for making oauth requests
   fn oauth_helper(&mut self, endpoint: Endpoint, grant: GrantType, params: Option<&[(&str, &str)]>) -> Result<()> {
     let client_creds = &self.client_credentials;
     let res = utils::oauth_request_helper(&self.http_client, endpoint, grant, client_creds, params).send()?;
@@ -132,6 +153,7 @@ impl Client {
     self.country = country;
     Ok(())
   }
+  /// Helper function for making get requests
   fn get_helper(
     &self,
     endpoint: Endpoint,
@@ -155,6 +177,7 @@ impl Client {
     }
     Ok(res)
   }
+  /// Helper function for making post requests
   fn post_helper(
     &self,
     endpoint: Endpoint,
@@ -178,6 +201,7 @@ impl Client {
     }
     Ok(res)
   }
+  /// Helper function for making delete requests
   fn delete_helper(
     &self,
     endpoint: Endpoint,
@@ -407,15 +431,19 @@ pub struct ClientCreds {
   client_secret: String,
 }
 impl ClientCreds {
+  /// Create a new `ClientCreds` struct with the given client_id and client_secret
   pub fn new(client_id: String, client_secret: String) -> Self {
     Self { client_id, client_secret }
   }
+  /// Returns the client_id
   pub fn id(&self) -> &str {
     &self.client_id
   }
+  /// Returns the client_secret
   pub fn secret(&self) -> &str {
     &self.client_secret
   }
+  /// Returns the client creds as a tuple of (id, secret)
   pub fn as_tuple(&self) -> (&str, &str) {
     (&self.client_id, &self.client_secret)
   }
