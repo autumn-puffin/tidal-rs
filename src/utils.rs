@@ -2,9 +2,7 @@ use crate::{
   client::{
     auth::{AuthCreds, GrantType, TokenResponse},
     ClientCreds,
-  },
-  endpoints::Endpoint,
-  Result,
+  }, endpoints::Endpoint, Result
 };
 use base64::prelude::*;
 use rand::{thread_rng, Rng};
@@ -78,8 +76,10 @@ pub fn new_pkce_pair() -> (String, String) {
 }
 
 pub fn res_to_error(res: reqwest::blocking::Response) -> crate::Error {
-  match res.status() {
-    reqwest::StatusCode::UNAUTHORIZED => crate::client::AuthError::Unauthenticated.into(),
-    _ => crate::Error::ApiError(res.json().unwrap()),
+  let err: crate::error::ApiErrorResponse = res.json().unwrap();
+  match (err.status, err.sub_status) {
+    (401, _) => crate::client::AuthError::Unauthenticated.into(),
+    (400, Some(1002)) => crate::client::AuthError::AuthorizationPending.into(),
+    _ => err.into(),
   }
 }
