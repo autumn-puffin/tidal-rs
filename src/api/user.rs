@@ -76,7 +76,7 @@ struct UserClientApplication {
   service: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Session {
   pub session_id: Uuid,
@@ -87,7 +87,7 @@ pub struct Session {
   pub client: SessionClient,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionClient {
   pub id: u64,
