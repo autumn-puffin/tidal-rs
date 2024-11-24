@@ -161,7 +161,7 @@ impl Client {
     form: Option<&[(&str, &str)]>,
     headers: Option<&[(&str, &str)]>,
   ) -> Result<Response> {
-    let auth = self.get_credentials()?;
+    let auth = self.get_credentials().ok();
     let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
     let headers = HeaderMap::try_from(headers).unwrap();
     let res = self
@@ -170,7 +170,7 @@ impl Client {
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
       .headers(headers)
-      .bearer_auth(auth.access_token())
+      .bearer_auth(auth.map(|a| a.access_token()).unwrap_or_default())
       .send()?;
     if !res.status().is_success() {
       return Err(utils::res_to_error(res));
@@ -185,7 +185,7 @@ impl Client {
     form: Option<&[(&str, &str)]>,
     headers: Option<&[(&str, &str)]>,
   ) -> Result<Response> {
-    let auth = self.get_credentials()?;
+    let auth = self.get_credentials().ok();
     let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
     let headers = HeaderMap::try_from(headers).unwrap();
     let res = self
@@ -194,7 +194,7 @@ impl Client {
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
       .headers(headers)
-      .bearer_auth(auth.access_token())
+      .bearer_auth(auth.map(|a| a.access_token()).unwrap_or_default())
       .send()?;
     if !res.status().is_success() {
       return Err(utils::res_to_error(res));
@@ -209,7 +209,7 @@ impl Client {
     form: Option<&[(&str, &str)]>,
     headers: Option<&[(&str, &str)]>,
   ) -> Result<Response> {
-    let auth = self.get_credentials()?;
+    let auth = self.get_credentials().ok();
     let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
     let headers = HeaderMap::try_from(headers).unwrap();
     let res = self
@@ -218,7 +218,7 @@ impl Client {
       .query(query.unwrap_or_default())
       .form(form.unwrap_or_default())
       .headers(headers)
-      .bearer_auth(auth.access_token())
+      .bearer_auth(auth.map(|a| a.access_token()).unwrap_or_default())
       .send()?;
     if !res.status().is_success() {
       return Err(utils::res_to_error(res));
