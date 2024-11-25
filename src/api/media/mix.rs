@@ -47,9 +47,9 @@ pub struct MixList {
 #[serde(rename_all = "camelCase")]
 pub struct Mix {
   pub id: String,
-  pub title: String,
-  pub sub_title: String,
-  pub short_subtitle: String,
+  pub title: Option<String>,
+  pub sub_title: Option<String>,
+  pub short_subtitle: Option<String>,
   pub mix_type: MixType,
   pub images: HashMap<String, Image>,
 
