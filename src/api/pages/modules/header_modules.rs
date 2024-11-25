@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::api::{Album, Artist, MixList};
+use crate::api::{Album, Artist, Mix, MixList};
 
 #[serde_flat_path::flat_path]
 #[derive(Debug, Serialize, Deserialize)]
@@ -30,7 +30,7 @@ pub struct GenreHeaderModule {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MixHeaderModule {
-  pub mix: String,
+  pub mix: Mix,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
