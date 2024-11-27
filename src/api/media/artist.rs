@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -18,6 +19,15 @@ pub struct Artist {
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
   pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArtistBio {
+  pub source: String,
+  pub last_updated: DateTime<Utc>,
+  pub text: String,
+  pub summary: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
