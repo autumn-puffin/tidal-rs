@@ -1,7 +1,6 @@
 use super::auth::Auth;
 use crate::{api::Page, Result};
 use isocountry::CountryCode;
-use url::Url;
 
 pub mod album_catalogue;
 pub mod artist_catalogue;
@@ -24,11 +23,11 @@ pub trait Catalogue: Auth {
     self.get_page(path.as_str())
   }
   fn get_artist_page(&self, artist_id: &u64) -> Result<Page> {
-    let path = format!("artist?artistId={}", artist_id.to_string());
+    let path = format!("artist?artistId={}", artist_id);
     self.get_page(path.as_str())
   }
   fn get_album_page(&self, album_id: &u64) -> Result<Page> {
-    let path = format!("album?albumId={}", album_id.to_string());
+    let path = format!("album?albumId={}", album_id);
     self.get_page(path.as_str())
   }
 }

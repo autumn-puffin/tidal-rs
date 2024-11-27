@@ -1,7 +1,10 @@
 use crate::{
   client::{
-    auth::{AuthCreds, GrantType, TokenResponse}, ClientCreds
-  }, endpoints::Endpoint, Result
+    auth::{AuthCreds, GrantType, TokenResponse},
+    ClientCreds,
+  },
+  endpoints::Endpoint,
+  Result,
 };
 use base64::prelude::*;
 use rand::{thread_rng, Rng};
@@ -86,7 +89,7 @@ pub fn res_to_error(res: reqwest::blocking::Response) -> crate::Error {
 pub fn client_from_authfile() -> Option<crate::client::Client> {
   let creds = std::fs::read_to_string("./auth.json").ok()?;
   let creds: AuthCreds = serde_json::from_str(&creds).ok()?;
-  let country = creds.country_code().unwrap().clone();
+  let country = *creds.country_code().unwrap();
   let mut client = crate::client::Client::new(creds.client_credentials().clone());
   client.set_auth_credentials(creds);
   client.set_country(country);
