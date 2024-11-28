@@ -34,6 +34,7 @@ use auth::{AuthClient, AuthCreds, TokenResponse};
 /// Standalone catalogue client implimentation
 pub mod catalogue;
 use catalogue::CatalogueClient;
+use video_catalogue::VideoCatalogue;
 
 /// A client for interacting with the Tidal API, implimenting all of the available interfaces.
 pub struct Client {
@@ -105,14 +106,14 @@ impl Client {
   pub fn can_refresh(&self) -> bool {
     self.auth_credentials.as_ref().map_or(false, |creds| creds.refresh_token().is_some())
   }
-  /// run a closure that may need to refresh the auth token 
-  /// 
+  /// run a closure that may need to refresh the auth token
+  ///
   /// ```rust
   /// let closure = |c: &mut Client| -> Result<Page> { c.get_page("home") }
-  /// 
+  ///
   /// let page = client.map_refresh(closure)?;
   /// // if an unauthenticated error is returned from map_refresh, the session is unable to be refreshed
-  /// 
+  ///
   /// ```
   pub fn map_refresh<F, T>(&mut self, mut func: F) -> Result<T>
   where
@@ -413,6 +414,36 @@ impl TrackCatalogue for Client {
 
   fn playback_info_for_track(&self, track_id: &u64, options: &PlaybackInfoOptions) -> Result<PlaybackInfo> {
     let endpoint = Endpoint::TracksPlaybackinfo(track_id);
+    let query = &options.get_query_params();
+    let headers = &[
+      ("x-tidal-token", self.client_credentials.id()),
+      ("x-tidal-prefetch", &options.prefetch.to_string()),
+      ("x-tidal-streamingsessionid", &self.streaming_session_id.to_string()),
+    ];
+    let res = self.get_helper(endpoint, Some(query), None, Some(headers))?;
+    Ok(res.json()?)
+  }
+}
+impl VideoCatalogue for Client {
+  fn get_video(&self, video_id: &u64) -> Result<crate::api::Video> {
+    let endpoint = Endpoint::Videos(video_id);
+    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
+    Ok(res.json()?)
+  }
+
+  fn get_video_recommendations(&self, video_id: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaRecommendation>> {
+    let endpoint = Endpoint::VideosRecommendations(video_id);
+    let query: &[(&str, &str)] = &[
+      ("limit", &limit.to_string()),
+      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
+    ];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
+    Ok(res.json()?)
+  }
+
+  fn playback_info_for_video(&self, video_id: &u64, options: &crate::api::PlaybackInfoOptions) -> Result<crate::api::PlaybackInfo> {
+    let endpoint = Endpoint::VideosPlaybackinfo(video_id);
     let query = &options.get_query_params();
     let headers = &[
       ("x-tidal-token", self.client_credentials.id()),
