@@ -42,6 +42,18 @@ pub enum Endpoint<'a> {
   Videos(&'a u64),
   VideosRecommendations(&'a u64),
   VideosPlaybackinfo(&'a u64),
+  Artists(&'a u64),
+  ArtistsBio(&'a u64),
+  ArtistsLinks(&'a u64),
+  ArtistsMix(&'a u64),
+  ArtistsTopTracks(&'a u64),
+  ArtistsVideos(&'a u64),
+  ArtistsAlbums(&'a u64),
+  Albums(&'a u64),
+  AlbumsCredits(&'a u64),
+  AlbumsItems(&'a u64),
+  AlbumsItemsWithCredits(&'a u64),
+  AlbumsReview(&'a u64),
 }
 impl Display for Endpoint<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
@@ -64,6 +76,18 @@ impl Display for Endpoint<'_> {
       Self::Videos(id) => (base_urls::API_URL_V1, format!("videos/{id}")),
       Self::VideosRecommendations(id) => (base_urls::API_URL_V1, format!("videos/{id}/recommendations")),
       Self::VideosPlaybackinfo(id) => (base_urls::API_URL_V1, format!("videos/{id}/playbackinfo")),
+      Self::Artists(id) => (base_urls::API_URL_V1, format!("artists/{id}")),
+      Self::ArtistsBio(id) => (base_urls::API_URL_V1, format!("artists/{id}/bio")),
+      Self::ArtistsLinks(id) => (base_urls::API_URL_V1, format!("artists/{id}/links")),
+      Self::ArtistsMix(id) => (base_urls::API_URL_V1, format!("artists/{id}/mix")),
+      Self::ArtistsTopTracks(id) => (base_urls::API_URL_V1, format!("artists/{id}/toptracks")),
+      Self::ArtistsVideos(id) => (base_urls::API_URL_V1, format!("artists/{id}/videos")),
+      Self::ArtistsAlbums(id) => (base_urls::API_URL_V1, format!("artists/{id}/albums")),
+      Self::Albums(id) => (base_urls::API_URL_V1, format!("albums/{id}")),
+      Self::AlbumsCredits(id) => (base_urls::API_URL_V1, format!("albums/{id}/credits")),
+      Self::AlbumsItems(id) => (base_urls::API_URL_V1, format!("albums/{id}/items")),
+      Self::AlbumsItemsWithCredits(id) => (base_urls::API_URL_V1, format!("albums/{id}/items/credits")),
+      Self::AlbumsReview(id) => (base_urls::API_URL_V1, format!("albums/{id}/review")),
     };
     write! {f, "{}{}", base, path}
   }
