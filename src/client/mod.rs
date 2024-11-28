@@ -18,6 +18,7 @@ use crate::{
   endpoints::Endpoint,
   utils, Result,
 };
+use artist_catalogue::ArtistCatalogue;
 use isocountry::CountryCode;
 use reqwest::{
   blocking::{Client as ReqwestClient, Response},
@@ -451,6 +452,61 @@ impl VideoCatalogue for Client {
       ("x-tidal-streamingsessionid", &self.streaming_session_id.to_string()),
     ];
     let res = self.get_helper(endpoint, Some(query), None, Some(headers))?;
+    Ok(res.json()?)
+  }
+}
+impl ArtistCatalogue for Client {
+  fn get_artist(&self, artist_id: &u64) -> Result<crate::api::Artist> {
+    let endpoint = Endpoint::Artists(artist_id);
+    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
+    Ok(res.json()?)
+  }
+
+  fn get_artist_bio(&self, artist_id: &u64) -> Result<crate::api::ArtistBio> {
+    let endpoint = Endpoint::ArtistsBio(artist_id);
+    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
+    Ok(res.json()?)
+  }
+
+  fn get_artist_mix_id(&self, artist_id: &u64) -> Result<crate::api::MixId> {
+    let endpoint = Endpoint::ArtistsMix(artist_id);
+    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
+    Ok(res.json()?)
+  }
+
+  fn get_artist_top_tracks(&self, artist_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::Track>> {
+    let endpoint = Endpoint::ArtistsTopTracks(artist_id);
+    let query: &[(&str, &str)] = &[
+      ("offset", &offset.to_string()),
+      ("limit", &limit.to_string()),
+      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
+    ];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
+    Ok(res.json()?)
+  }
+
+  fn get_artist_videos(&self, artist_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::Video>> {
+    let endpoint = Endpoint::ArtistsVideos(artist_id);
+    let query: &[(&str, &str)] = &[
+      ("offset", &offset.to_string()),
+      ("limit", &limit.to_string()),
+      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
+    ];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
+    Ok(res.json()?)
+  }
+
+  fn get_artist_albums(&self, artist_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::Album>> {
+    let endpoint = Endpoint::ArtistsAlbums(artist_id);
+    let query: &[(&str, &str)] = &[
+      ("offset", &offset.to_string()),
+      ("limit", &limit.to_string()),
+      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
+    ];
+    let res = self.get_helper(endpoint, Some(query), None, None)?;
     Ok(res.json()?)
   }
 }

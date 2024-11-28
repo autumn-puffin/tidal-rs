@@ -1,5 +1,7 @@
 use crate::{
-  client::{video_catalogue::VideoCatalogue as _, Catalogue as _, RefreshFlow as _, Sessions, TrackCatalogue, Users},
+  client::{
+    artist_catalogue::ArtistCatalogue as _, video_catalogue::VideoCatalogue as _, Catalogue as _, RefreshFlow as _, Sessions, TrackCatalogue, Users,
+  },
   utils::client_from_authfile,
 };
 
@@ -57,4 +59,17 @@ fn videos() {
   client.refresh().unwrap();
   client.get_video(video_id).unwrap();
   client.get_video_recommendations(video_id, &10).unwrap();
+}
+
+#[test]
+fn artists() {
+  let artist_id = &EXAMPLE_ARTIST_ID;
+  let mut client = client_from_authfile().unwrap();
+  client.refresh().unwrap();
+  client.get_artist(artist_id).unwrap();
+  client.get_artist_bio(artist_id).unwrap();
+  client.get_artist_mix_id(artist_id).unwrap();
+  client.get_artist_top_tracks(artist_id, &0, &10).unwrap();
+  client.get_artist_videos(artist_id, &0, &10).unwrap();
+  client.get_artist_albums(artist_id, &0, &10).unwrap();
 }
