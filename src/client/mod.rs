@@ -139,6 +139,11 @@ impl Client {
 
     self.get_helper(endpoint, Some(query), None, None)
   }
+  /// get an endpoint as a `Response`
+  pub fn get_endpoint_response(&self, endpoint: Endpoint) -> Result<Response> {
+    let query = &[("countryCode", self.get_country()?.alpha2())];
+    self.get_helper(endpoint, Some(query), None, None)
+  }
 }
 impl Client {
   /// Helper function for making oauth requests
@@ -327,23 +332,17 @@ impl RefreshFlow for Client {
 impl Users for Client {
   fn get_user(&self, user_id: &u64) -> Result<User> {
     let endpoint = Endpoint::Users(user_id);
-    let query = &[("CountryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
+    Ok(self.get_endpoint_response(endpoint)?.json()?)
   }
 
   fn get_user_subscription(&self, user_id: &u64) -> Result<UserSubscription> {
     let endpoint = Endpoint::UsersSubscription(user_id);
-    let query = &[("CountryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
+    Ok(self.get_endpoint_response(endpoint)?.json()?)
   }
 
   fn get_user_clients(&self, user_id: &u64) -> Result<Paging<UserClient>> {
     let endpoint = Endpoint::UsersClients(user_id);
-    let query = &[("CountryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
+    Ok(self.get_endpoint_response(endpoint)?.json()?)
   }
 
   fn authorize_client(&self, client_id: &u64, name: &str) -> Result<()> {
@@ -372,9 +371,7 @@ impl Catalogue for Client {
 impl TrackCatalogue for Client {
   fn get_track(&self, track_id: &u64) -> Result<Track> {
     let endpoint = Endpoint::Tracks(track_id);
-    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
+    Ok(self.get_endpoint_response(endpoint)?.json()?)
   }
 
   fn get_track_credits(&self, track_id: &u64, limit: &u64, include_contributors: bool) -> Result<Vec<MediaCredit>> {
@@ -390,17 +387,12 @@ impl TrackCatalogue for Client {
 
   fn get_track_mix_id(&self, track_id: &u64) -> Result<MixId> {
     let endpoint = Endpoint::TracksMix(track_id);
-    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
+    Ok(self.get_endpoint_response(endpoint)?.json()?)
   }
 
   fn get_track_lyrics(&self, track_id: &u64) -> Result<Lyrics> {
     let endpoint = Endpoint::TracksLyrics(track_id);
-    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
-
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
+    Ok(self.get_endpoint_response(endpoint)?.json()?)
   }
 
   fn get_track_recommendations(&self, track_id: &u64, limit: &u64) -> Result<Paging<MediaRecommendation>> {
@@ -428,9 +420,7 @@ impl TrackCatalogue for Client {
 impl VideoCatalogue for Client {
   fn get_video(&self, video_id: &u64) -> Result<crate::api::Video> {
     let endpoint = Endpoint::Videos(video_id);
-    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
+    Ok(self.get_endpoint_response(endpoint)?.json()?)
   }
 
   fn get_video_recommendations(&self, video_id: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaRecommendation>> {
@@ -458,23 +448,17 @@ impl VideoCatalogue for Client {
 impl ArtistCatalogue for Client {
   fn get_artist(&self, artist_id: &u64) -> Result<crate::api::Artist> {
     let endpoint = Endpoint::Artists(artist_id);
-    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
+    Ok(self.get_endpoint_response(endpoint)?.json()?)
   }
 
   fn get_artist_bio(&self, artist_id: &u64) -> Result<crate::api::ArtistBio> {
     let endpoint = Endpoint::ArtistsBio(artist_id);
-    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
+    Ok(self.get_endpoint_response(endpoint)?.json()?)
   }
 
   fn get_artist_mix_id(&self, artist_id: &u64) -> Result<crate::api::MixId> {
     let endpoint = Endpoint::ArtistsMix(artist_id);
-    let query = &[("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2())];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
+    Ok(self.get_endpoint_response(endpoint)?.json()?)
   }
 
   fn get_artist_top_tracks(&self, artist_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::Track>> {
