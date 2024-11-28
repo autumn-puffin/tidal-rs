@@ -18,6 +18,7 @@ use crate::{
   endpoints::Endpoint,
   utils, Result,
 };
+use album_catalogue::AlbumCatalogue;
 use artist_catalogue::ArtistCatalogue;
 use isocountry::CountryCode;
 use reqwest::{
@@ -492,6 +493,48 @@ impl ArtistCatalogue for Client {
     ];
     let res = self.get_helper(endpoint, Some(query), None, None)?;
     Ok(res.json()?)
+  }
+}
+impl AlbumCatalogue for Client {
+  fn get_album(&self, album_id: &u64) -> Result<crate::api::Album> {
+    let endpoint = Endpoint::Albums(album_id);
+    Ok(self.get_endpoint_response(endpoint)?.json()?)
+  }
+
+  fn get_album_credits(&self, album_id: &u64, include_contributors: bool) -> Result<Vec<crate::api::MediaCredit>> {
+    let endpoint = Endpoint::AlbumsCredits(album_id);
+    let query: &[(&str, &str)] = &[
+      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
+      ("includeContributors", &include_contributors.to_string()),
+    ];
+    Ok(self.get_helper(endpoint, Some(query), None, None)?.json()?)
+  }
+
+  fn get_album_items(&self, album_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaItem>> {
+    let endpint = Endpoint::AlbumsItems(album_id);
+    let query: &[(&str, &str)] = &[
+      ("offset", &offset.to_string()),
+      ("limit", &limit.to_string()),
+      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
+    ];
+    Ok(self.get_helper(endpint, Some(query), None, None)?.json()?)
+  }
+
+  fn get_album_items_with_credits(
+    &self,
+    album_id: &u64,
+    offset: &u64,
+    limit: &u64,
+    include_contributors: bool,
+  ) -> Result<crate::api::Paging<crate::api::MediaItem>> {
+    let endpint = Endpoint::AlbumsItems(album_id);
+    let query: &[(&str, &str)] = &[
+      ("offset", &offset.to_string()),
+      ("limit", &limit.to_string()),
+      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
+      ("includeContributors", &include_contributors.to_string()),
+    ];
+    Ok(self.get_helper(endpint, Some(query), None, None)?.json()?)
   }
 }
 
