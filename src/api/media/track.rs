@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::{AudioMode, AudioQuality};
 
-use super::{AlbumRelationship, Artist, MediaMetadata, MixList};
+use super::{Album, Artist, MediaMetadata, MixList};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -31,7 +31,7 @@ pub struct Track {
   pub copyright: Option<String>,
   pub audio_quality: AudioQuality,
   pub mixes: MixList,
-  pub album: AlbumRelationship,
+  pub album: Album,
   pub artist: Option<Artist>,
   pub artists: Vec<Artist>,
   pub media_metadata: MediaMetadata,

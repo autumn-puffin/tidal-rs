@@ -32,19 +32,3 @@ pub struct Album {
   #[serde(flatten)]
   pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AlbumRelationship {
-  pub id: u64,
-  pub title: String,
-  pub cover: Uuid,
-  pub vibrant_color: Option<String>,
-  pub url: Option<String>,
-  pub video_cover: Option<Uuid>,
-  pub release_date: Option<NaiveDate>,
-
-  #[cfg(feature = "show_unmodeled")]
-  #[serde(flatten)]
-  pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
-}
