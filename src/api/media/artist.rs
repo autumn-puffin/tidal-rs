@@ -7,7 +7,7 @@ use super::MixList;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Artist {
-  pub id: u64,
+  pub id: Option<u64>,
   pub name: String,
   pub r#type: Option<String>,
   pub artist_types: Option<Vec<ArtistType>>,
