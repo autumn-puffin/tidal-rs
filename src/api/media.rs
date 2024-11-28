@@ -38,6 +38,7 @@ pub enum MediaType {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(untagged)]
 pub enum MediaItem {
   Track(Track),
   Video(Video),
