@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 pub mod modules;
 use modules::ModuleType;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Page {
   pub self_link: Option<String>,
@@ -15,7 +15,7 @@ pub struct Page {
   pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PageRow {
   pub modules: Vec<PageModule>,
@@ -24,7 +24,7 @@ pub struct PageRow {
   pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
 pub struct PageModule {
@@ -45,14 +45,14 @@ pub struct PageModule {
   pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ShowMore {
   pub title: String,
   pub api_path: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PageItem {
   pub title: Option<String>,

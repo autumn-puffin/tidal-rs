@@ -37,7 +37,7 @@ impl Default for PlaybackInfoOptions {
   }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlaybackInfo {
   pub track_id: u64,

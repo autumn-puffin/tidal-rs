@@ -23,7 +23,7 @@ pub use video::*;
 
 use super::MediaTag;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[serde(tag = "type", content = "item")]
 pub enum MediaType {
@@ -36,7 +36,7 @@ pub enum MediaType {
   Video(Video),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(untagged)]
 pub enum MediaItem {
@@ -44,13 +44,13 @@ pub enum MediaItem {
   Video(Video),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MediaMetadata {
   pub tags: Vec<MediaTag>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MediaRecommendation {
   #[serde(flatten)]
@@ -58,7 +58,7 @@ pub struct MediaRecommendation {
   sources: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MediaCredit {
   pub r#type: String,

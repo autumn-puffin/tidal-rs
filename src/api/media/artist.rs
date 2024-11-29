@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use super::MixList;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Artist {
   pub id: Option<u64>,
@@ -21,7 +21,7 @@ pub struct Artist {
   pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArtistBio {
   pub source: String,
@@ -30,14 +30,14 @@ pub struct ArtistBio {
   pub summary: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ArtistType {
   Artist,
   Contributor,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArtistRole {
   pub category: String,

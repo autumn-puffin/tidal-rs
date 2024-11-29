@@ -5,7 +5,7 @@ use crate::api::{AudioMode, AudioQuality};
 
 use super::{Album, Artist, MediaMetadata, MixList};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Track {
   pub id: u64,

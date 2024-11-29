@@ -5,7 +5,7 @@ pub mod header_modules;
 use header_modules::*;
 pub mod collection_modules;
 use collection_modules::*;
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[serde(tag = "type")]
 pub enum ModuleType {
@@ -42,13 +42,13 @@ pub enum ModuleType {
   Unknown,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HighlightModule {
   pub playlist_style: Option<PlaylistStyle>,
   pub highlights: Vec<Highlight>,
 }
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Highlight {
   pub title: String,

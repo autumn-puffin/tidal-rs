@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use super::Artist;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Playlist {
   pub uuid: Uuid,
@@ -25,7 +25,7 @@ pub struct Playlist {
   pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PlaylistType {
   Artist,

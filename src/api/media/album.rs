@@ -6,7 +6,7 @@ use crate::api::{AudioMode, AudioQuality};
 
 use super::{Artist, MediaMetadata};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Album {
   pub id: u64,
