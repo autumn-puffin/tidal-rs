@@ -56,3 +56,16 @@ pub struct PageItem {
   #[serde(flatten)]
   pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PromotionElement {
+  pub artifact_id: String,
+  pub featured: bool,
+  pub image_id: Option<uuid::Uuid>,
+  pub header: Option<String>,
+  pub short_header: Option<String>,
+  pub short_sub_header: Option<String>,
+  pub text: Option<String>,
+  pub r#type: String,
+}

@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::api::{Album, Article, Artist, Layout, ListFormat, MediaType, Mix, PageItem, PagingList, Playlist, PlaylistStyle, Track, Video};
+use crate::api::{
+  Album, Article, Artist, Layout, ListFormat, MediaType, Mix, PageItem, PagingList, Playlist, PlaylistStyle, PromotionElement, Track, Video,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -20,6 +22,12 @@ pub struct PageLinksCollectionModule {
 pub struct PageLinksCloudCollectionModule {
   pub paged_list: PagingList<PageItem>,
   pub lines: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MultipleTopPromotionsModule {
+  pub items: Vec<PromotionElement>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
