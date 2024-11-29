@@ -38,18 +38,11 @@ pub struct PageModule {
   pub quick_play: bool,
   pub scroll: Option<String>,
   pub self_link: Option<String>,
-  pub show_more: Option<ShowMore>,
+  pub show_more: Option<PageItem>,
 
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
   pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ShowMore {
-  pub title: String,
-  pub api_path: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
