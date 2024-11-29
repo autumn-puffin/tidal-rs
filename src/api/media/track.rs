@@ -29,7 +29,7 @@ pub struct Track {
   pub editable: bool,
   pub isrc: Option<String>,
   pub copyright: Option<String>,
-  pub audio_quality: AudioQuality,
+  pub audio_quality: Option<AudioQuality>,
   pub mixes: MixList,
   pub album: Album,
   pub artist: Option<Artist>,
