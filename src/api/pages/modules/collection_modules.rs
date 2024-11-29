@@ -1,12 +1,25 @@
 use serde::{Deserialize, Serialize};
 
-use crate::api::{Album, Article, Artist, Layout, ListFormat, MediaType, Mix, PagingList, Playlist, PlaylistStyle, Track, Video};
+use crate::api::{Album, Article, Artist, Layout, ListFormat, MediaType, Mix, PageItem, PagingList, Playlist, PlaylistStyle, Track, Video};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CollectionModule<T> {
   pub supports_paging: bool,
   pub paged_list: Option<PagingList<T>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PageLinksCollectionModule {
+  pub paged_list: PagingList<PageItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PageLinksCloudCollectionModule {
+  pub paged_list: PagingList<PageItem>,
+  pub lines: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
