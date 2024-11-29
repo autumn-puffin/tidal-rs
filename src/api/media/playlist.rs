@@ -9,7 +9,7 @@ use super::Artist;
 pub struct Playlist {
   pub uuid: Uuid,
   pub title: String,
-  pub description: String,
+  pub description: Option<String>,
   pub url: Option<String>,
   pub number_of_tracks: Option<u64>,
   pub number_of_videos: Option<u64>,
