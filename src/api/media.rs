@@ -38,8 +38,15 @@ pub enum MediaType {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[serde(untagged)]
+#[serde(tag = "type", content = "item")]
 pub enum MediaItem {
+  Track(Track),
+  Video(Video),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum MediaItemRecommendation {
   Track(Track),
   Video(Video),
 }
@@ -54,7 +61,7 @@ pub struct MediaMetadata {
 #[serde(rename_all = "camelCase")]
 pub struct MediaRecommendation {
   #[serde(flatten)]
-  media: MediaItem,
+  media: MediaItemRecommendation,
   sources: Vec<String>,
 }
 
