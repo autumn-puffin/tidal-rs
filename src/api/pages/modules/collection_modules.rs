@@ -1,7 +1,8 @@
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 use crate::api::{
-  Album, Article, Artist, Layout, ListFormat, MediaType, Mix, PageItem, PagingList, Playlist, PlaylistStyle, PromotionElement, Track, Video,
+  Album, Article, Artist, Layout, ListFormat, MediaItem, MediaType, Mix, PageItem, PagingList, Playlist, PlaylistStyle, PromotionElement, SocialItem, Track, Video
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -97,4 +98,23 @@ pub struct VideoCollectionModule {
 pub struct AnyMediaCollectionModule {
   #[serde(flatten)]
   pub collection: CollectionModule<MediaType>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AlbumItemsCollectionModule {
+  pub play_button: bool,
+  pub shuffle_button: bool,
+  pub release_date: NaiveDate,
+  pub list_format: ListFormat,
+  pub copyright: String,
+  #[serde(flatten)]
+  pub collection: CollectionModule<MediaItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SocialModule {
+  pub social_profiles: Vec<SocialItem>,
+  pub social_links: Vec<SocialItem>,
 }

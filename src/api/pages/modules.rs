@@ -10,7 +10,7 @@ use collection_modules::*;
 #[serde(tag = "type")]
 pub enum ModuleType {
   AlbumHeader(AlbumHeaderModule),                     //AlbumHeaderModule,
-  AlbumItems,                                         //AlbumItemsCollectionModule,
+  AlbumItems(AlbumItemsCollectionModule),             //AlbumItemsCollectionModule,
   AlbumList(AlbumCollectionModule),                   //AlbumCollectionModule,
   ArtistHeader(ArtistHeaderModule),                   //ArtistHeaderModule
   ArticleList(ArticleCollectionModule),               //ArticleCollectionModule
@@ -33,7 +33,7 @@ pub enum ModuleType {
   TextBlock(TextModule),                              //TextModule
   Ticketmaster,                                       //TicketMasterModule
   TrackList(TrackCollectionModule),                   //TrackCollectionModule
-  Social,                                             //SocialModule
+  Social(SocialModule),                               //SocialModule
   VideoList(VideoCollectionModule),                   //VideoCollectionModule
   ContributorHeader(ContributorHeaderModule),         //ContributorHeaderModule
   ItemListWithRoles,                                  //ContributionItemModule

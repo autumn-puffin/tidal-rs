@@ -71,3 +71,10 @@ pub struct MediaCredit {
   pub r#type: String,
   pub contributors: Vec<Artist>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SocialItem {
+  pub r#type: String,
+  pub url: String,
+}
