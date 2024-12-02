@@ -33,12 +33,13 @@ impl Crawl for ModuleType {
       ModuleType::VideoList(video_collection_module) => targets.extend(video_collection_module.identify_targets()?),
       ModuleType::TextBlock(_) => {}
       ModuleType::MultipleTopPromotions(_) => {}
-      ModuleType::ArtistHeader(artist_header_module) => todo!(),
-      ModuleType::ArticleList(article_collection_module) => todo!(),
+      ModuleType::MixHeader(mix_header_module) => targets.extend(mix_header_module.identify_targets()?),
+      ModuleType::ArtistHeader(artist_header_module) => targets.extend(artist_header_module.identify_targets()?),
+      ModuleType::AlbumItems(album_items_collection_module) => targets.extend(album_items_collection_module.identify_targets()?),
+      ModuleType::ArticleList(_) => {},
+      ModuleType::Social(_) => {},
       ModuleType::GenreHeader(genre_header_module) => todo!(),
-      ModuleType::MixHeader(mix_header_module) => todo!(),
       ModuleType::ContributorHeader(contributor_header_module) => todo!(),
-      ModuleType::AlbumItems => todo!(),
       ModuleType::FeaturedPromotions => todo!(),
       ModuleType::PageLinksImage => todo!(),
       ModuleType::Radio => todo!(),
@@ -46,7 +47,6 @@ impl Crawl for ModuleType {
       ModuleType::Store => todo!(),
       ModuleType::TaskList => todo!(),
       ModuleType::Ticketmaster => todo!(),
-      ModuleType::Social => todo!(),
       ModuleType::ItemListWithRoles => todo!(),
       ModuleType::LiveSessionList => todo!(),
       ModuleType::Unknown => todo!(),
@@ -109,6 +109,27 @@ impl Crawl for ArtistCollectionModule {
   }
 }
 impl Crawl for VideoCollectionModule {
+  fn identify_targets(&self) -> Result<HashSet<Target>, Error> {
+    self.collection.identify_targets()
+  }
+}
+impl Crawl for MixHeaderModule {
+  fn identify_targets(&self) -> Result<HashSet<Target>, Error> {
+    self.mix.identify_targets()
+  }
+}
+impl Crawl for ArtistHeaderModule {
+  fn identify_targets(&self) -> Result<HashSet<Target>, Error> {
+    let mut targets = HashSet::new();
+    targets.extend(self.artist.identify_targets()?);
+    let mixes = self.mixes.clone();
+    for mix in [mixes.artist_mix, mixes.master_artist_mix].iter().flatten() {
+      targets.insert(Target::Mix(mix.clone()));
+    }
+    Ok(targets)
+  }
+}
+impl Crawl for AlbumItemsCollectionModule {
   fn identify_targets(&self) -> Result<HashSet<Target>, Error> {
     self.collection.identify_targets()
   }

@@ -18,18 +18,24 @@ fn main() {
 
   let targets = get_inital_targets(&client, spider_path).unwrap();
   for target in &targets {
-    if let Target::Page(_) = target {
-      println!("{}", target);
-    }
+    println!("{}", target);
   }
   targets.iter().for_each(|target| {
-    if let Target::Page(page_path) = target {
-      let targets = get_page_targets(&client, spider_path, page_path).unwrap();
-      for target in targets {
-        if let Target::Page(_) = target {
-          println!("{}", target);
-        }
-      }
+    let path;
+    match target {
+      Target::Page(page) => path = page.clone(),
+      Target::Album(album) => path = format!("album?albumId={}", album),
+      Target::Artist(artist) => path = format!("artist?artistId={}", artist),
+      Target::Mix(mix) => path = format!("mix?mixId={}", mix),
+      // Target::Playlist(playlist) => path = format!("playlist?playlistId={}", playlist),
+      Target::Profile(profile) => path = format!("profile?userId={}", profile),
+      // Target::Track(track) => path = format!("track?trackId={}", track),
+      Target::Video(video) => path = format!("video?videoId={}", video),
+      _ => return,
+    } 
+    let targets = get_page_targets(&client, spider_path, &path).unwrap();
+    for target in &targets {
+      println!("{}", target);
     }
   });
 }

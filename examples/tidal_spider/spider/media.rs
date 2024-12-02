@@ -76,3 +76,11 @@ impl Crawl for Video {
     Ok(targets)
   }
 }
+impl Crawl for MediaItem {
+  fn identify_targets(&self) -> Result<HashSet<Target>, Error> {
+    match self {
+      MediaItem::Track(track) => track.identify_targets(),
+      MediaItem::Video(video) => video.identify_targets(),
+    }
+  }
+}
