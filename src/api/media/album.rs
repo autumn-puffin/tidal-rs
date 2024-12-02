@@ -11,7 +11,7 @@ use super::{Artist, MediaMetadata};
 pub struct Album {
   pub id: u64,
   pub title: String,
-  pub cover: Uuid,
+  pub cover: Option<Uuid>,
   pub vibrant_color: Option<String>,
   pub url: Option<String>,
   pub video_cover: Option<String>,
