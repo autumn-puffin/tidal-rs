@@ -10,8 +10,9 @@ use crate::api::{Album, Artist, Mix, MixList};
 pub struct ArtistHeaderModule {
   pub api_path: Option<String>,
   pub artist: Artist,
-  #[flat_path(path = ["artistMix", "id"])]
-  pub artist_mix: Option<String>,
+  // this causes errors if null
+  // #[flat_path(path = ["artistMix", "id"])]
+  // pub artist_mix: Option<String>,
   pub mixes: MixList,
 }
 
