@@ -3,10 +3,7 @@ use crate::error::Error;
 use std::collections::HashSet;
 use tidal_rs::api::modules::{collection_modules::*, header_modules::*, *};
 
-impl<T> Crawl for CollectionModule<T>
-where
-  T: Crawl + Clone,
-{
+impl<T: Crawl + Clone> Crawl for CollectionModule<T> {
   fn identify_targets(&self) -> Result<HashSet<Target>, Error> {
     self
       .paged_list
@@ -36,8 +33,8 @@ impl Crawl for ModuleType {
       ModuleType::MixHeader(mix_header_module) => targets.extend(mix_header_module.identify_targets()?),
       ModuleType::ArtistHeader(artist_header_module) => targets.extend(artist_header_module.identify_targets()?),
       ModuleType::AlbumItems(album_items_collection_module) => targets.extend(album_items_collection_module.identify_targets()?),
-      ModuleType::ArticleList(_) => {},
-      ModuleType::Social(_) => {},
+      ModuleType::ArticleList(_) => {}
+      ModuleType::Social(_) => {}
       ModuleType::GenreHeader(genre_header_module) => todo!(),
       ModuleType::ContributorHeader(contributor_header_module) => todo!(),
       ModuleType::FeaturedPromotions => todo!(),

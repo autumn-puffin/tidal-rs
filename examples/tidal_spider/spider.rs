@@ -10,10 +10,7 @@ pub trait Crawl {
   fn identify_targets(&self) -> Result<HashSet<Target>, Error>;
 }
 
-impl<T> Crawl for Vec<T>
-where
-  T: Crawl,
-{
+impl<T: Crawl> Crawl for Vec<T> {
   fn identify_targets(&self) -> Result<HashSet<Target>, Error> {
     let mut targets: HashSet<Target> = HashSet::new();
     for item in self {
@@ -22,10 +19,7 @@ where
     Ok(targets)
   }
 }
-impl<T> Crawl for Option<T>
-where
-  T: Crawl,
-{
+impl<T: Crawl> Crawl for Option<T> {
   fn identify_targets(&self) -> Result<HashSet<Target>, Error> {
     self.as_ref().map_or(Ok(HashSet::new()), |t| t.identify_targets())
   }
