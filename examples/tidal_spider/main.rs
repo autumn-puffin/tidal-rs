@@ -21,18 +21,17 @@ fn main() {
     println!("{}", target);
   }
   targets.iter().for_each(|target| {
-    let path;
-    match target {
-      Target::Page(page) => path = page.clone(),
-      Target::Album(album) => path = format!("album?albumId={}", album),
-      Target::Artist(artist) => path = format!("artist?artistId={}", artist),
-      Target::Mix(mix) => path = format!("mix?mixId={}", mix),
-      // Target::Playlist(playlist) => path = format!("playlist?playlistId={}", playlist),
-      Target::Profile(profile) => path = format!("profile?userId={}", profile),
-      // Target::Track(track) => path = format!("track?trackId={}", track),
-      Target::Video(video) => path = format!("video?videoId={}", video),
+    let path = match target {
+      Target::Page(page) => page.clone(),
+      Target::Album(album) => format!("album?albumId={}", album),
+      Target::Artist(artist) => format!("artist?artistId={}", artist),
+      Target::Mix(mix) => format!("mix?mixId={}", mix),
+      // Target::Playlist(playlist) => format!("playlist?playlistId={}", playlist),
+      Target::Profile(profile) => format!("profile?userId={}", profile),
+      // Target::Track(track) => format!("track?trackId={}", track),
+      Target::Video(video) => format!("video?videoId={}", video),
       _ => return,
-    } 
+    };
     let targets = get_page_targets(&client, spider_path, &path).unwrap();
     for target in &targets {
       println!("{}", target);
