@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use super::{AudioQuality, PaymentType, SubscriptionType};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
   id: u64,
@@ -29,7 +29,7 @@ pub struct User {
   early_access_program: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserSubscription {
   start_date: DateTime<Utc>,
@@ -43,7 +43,7 @@ pub struct UserSubscription {
   payment_overdue: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Subscription {
   #[serde(rename = "type")]
@@ -51,7 +51,7 @@ pub struct Subscription {
   offline_grace_period: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserClient {
   id: u64,
@@ -67,7 +67,7 @@ pub struct UserClient {
 }
 
 #[serde_flat_path::flat_path]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct UserClientApplication {
   name: String,
@@ -76,7 +76,7 @@ struct UserClientApplication {
   service: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Session {
   pub session_id: Uuid,
@@ -87,7 +87,7 @@ pub struct Session {
   pub client: SessionClient,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionClient {
   pub id: u64,

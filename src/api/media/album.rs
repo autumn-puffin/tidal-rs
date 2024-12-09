@@ -6,43 +6,27 @@ use crate::api::{AudioMode, AudioQuality};
 
 use super::{Artist, MediaMetadata};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Album {
   pub id: u64,
   pub title: String,
-  pub cover: Uuid,
+  pub cover: Option<Uuid>,
   pub vibrant_color: Option<String>,
   pub url: Option<String>,
   pub video_cover: Option<String>,
-  pub artists: Vec<Artist>,
-  pub audio_quality: AudioQuality,
-  pub number_of_tracks: u64,
-  pub number_of_videos: u64,
-  pub duration: u64,
-  pub stream_ready: bool,
-  pub allow_streaming: bool,
-  pub explicit: bool,
-  pub media_metadata: MediaMetadata,
-  pub audio_modes: Vec<AudioMode>,
+  pub artists: Option<Vec<Artist>>,
+  pub audio_quality: Option<AudioQuality>,
+  pub number_of_tracks: Option<u64>,
+  pub number_of_videos: Option<u64>,
+  pub duration: Option<u64>,
+  pub stream_ready: Option<bool>,
+  pub allow_streaming: Option<bool>,
+  pub explicit: Option<bool>,
+  pub media_metadata: Option<MediaMetadata>,
+  pub audio_modes: Option<Vec<AudioMode>>,
   pub release_date: Option<NaiveDate>,
   pub stream_start_date: Option<DateTime<Utc>>,
-
-  #[cfg(feature = "show_unmodeled")]
-  #[serde(flatten)]
-  pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AlbumRelationship {
-  pub id: u64,
-  pub title: String,
-  pub cover: Uuid,
-  pub vibrant_color: Option<String>,
-  pub url: Option<String>,
-  pub video_cover: Option<Uuid>,
-  pub release_date: Option<NaiveDate>,
 
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]

@@ -78,8 +78,21 @@ pub fn new_pkce_pair() -> (String, String) {
 }
 
 pub fn res_to_error(res: reqwest::blocking::Response) -> crate::Error {
-  match res.status() {
-    reqwest::StatusCode::UNAUTHORIZED => crate::client::AuthError::Unauthenticated.into(),
-    _ => crate::Error::ApiError(res.json().unwrap()),
+  let err: crate::error::ApiErrorResponse = res.json().unwrap();
+  match (err.status, err.sub_status) {
+    (401, _) => crate::client::AuthError::Unauthenticated.into(),
+    (400, Some(1002)) => crate::client::AuthError::AuthorizationPending.into(),
+    _ => err.into(),
   }
+}
+
+pub fn client_from_authfile() -> Option<crate::client::Client> {
+  let creds = std::fs::read_to_string("./auth.json").ok()?;
+  let creds: AuthCreds = serde_json::from_str(&creds).ok()?;
+  let country = *creds.country_code().unwrap();
+  let mut client = crate::client::Client::new(creds.client_credentials().clone());
+  client.set_auth_credentials(creds);
+  client.set_country(country);
+
+  Some(client)
 }

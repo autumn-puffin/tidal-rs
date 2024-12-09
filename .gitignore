@@ -3,3 +3,5 @@
 .env
 auth.json
 page.json
+lcov.info
+/spider

@@ -23,7 +23,7 @@ pub use video::*;
 
 use super::MediaTag;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[serde(tag = "type", content = "item")]
 pub enum MediaType {
@@ -36,30 +36,45 @@ pub enum MediaType {
   Video(Video),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(tag = "type", content = "item")]
 pub enum MediaItem {
   Track(Track),
   Video(Video),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum MediaItemRecommendation {
+  Track(Track),
+  Video(Video),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MediaMetadata {
   pub tags: Vec<MediaTag>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MediaRecommendation {
   #[serde(flatten)]
-  media: MediaItem,
+  media: MediaItemRecommendation,
   sources: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MediaCredit {
   pub r#type: String,
   pub contributors: Vec<Artist>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SocialItem {
+  pub r#type: String,
+  pub url: String,
 }
