@@ -81,36 +81,13 @@ impl App {
   }
 
   fn draw_interactions_panel(&mut self, ui: &mut egui::Ui) {
-    let interface_state = &mut self.app_state.interface_state;
-    egui::ScrollArea::vertical().show(ui, |ui| match interface_state.selection {
+    let selection = self.app_state.interface_state.selection;
+    egui::ScrollArea::vertical().show(ui, |ui| match selection {
       Some(InterfaceSelection::Users) => {
         ui.label(RichText::new("Users").heading());
         ui.separator();
       }
-      Some(InterfaceSelection::Catalogue) => {
-        ui.label(RichText::new("Catalogue").heading());
-        ui.separator();
-        ui.label("Get Page");
-        ui.horizontal(|ui| {
-          ui.add(TextEdit::singleline(&mut interface_state.page_path).desired_width(100.));
-          ui.button("Get").on_hover_text("Get the specified page").clicked().then(|| {
-            self
-              .event_sender
-              .send(BackgroundEvent::CatalogueGetPage(interface_state.page_path.clone()))
-              .unwrap();
-          })
-        });
-        egui::ScrollArea::vertical().max_height(250.).min_scrolled_height(250.).show(ui, |ui| {
-          egui::Frame::dark_canvas(ui.style()).show(ui, |ui| {
-            ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
-            let page = match &interface_state.page {
-              Some(page) => page,
-              None => "No page",
-            };
-            ui.add(Label::new(page));
-          });
-        });
-      }
+      Some(InterfaceSelection::Catalogue) => self.catalogue_interactions(ui),
       Some(InterfaceSelection::Track) => {
         ui.label(RichText::new("Track").heading());
         ui.separator();
@@ -120,6 +97,31 @@ impl App {
         ui.separator();
         ui.label("Select an interface to interact with");
       }
+    });
+  }
+  fn catalogue_interactions(&mut self, ui: &mut egui::Ui) {
+    let interface_state = &mut self.app_state.interface_state;
+    ui.label(RichText::new("Catalogue").heading());
+    ui.separator();
+    ui.label("Get Page");
+    ui.horizontal(|ui| {
+      ui.add(TextEdit::singleline(&mut interface_state.page_path).desired_width(100.));
+      ui.button("Get").on_hover_text("Get the specified page").clicked().then(|| {
+        self
+          .event_sender
+          .send(BackgroundEvent::CatalogueGetPage(interface_state.page_path.clone()))
+          .unwrap();
+      })
+    });
+    egui::ScrollArea::vertical().max_height(250.).min_scrolled_height(250.).show(ui, |ui| {
+      egui::Frame::dark_canvas(ui.style()).show(ui, |ui| {
+        ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
+        let page = match &interface_state.page {
+          Some(page) => page,
+          None => "No page",
+        };
+        ui.add(Label::new(page));
+      });
     });
   }
 }
