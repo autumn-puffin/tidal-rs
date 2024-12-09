@@ -142,7 +142,7 @@ struct AppState {
   interface_state: InterfaceState,
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 enum InterfaceSelection {
   Users,
   Catalogue,
