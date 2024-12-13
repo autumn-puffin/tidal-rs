@@ -16,7 +16,7 @@ fn main() {
   let spider_path = Path::new("./spider/");
   std::fs::create_dir_all(spider_path).unwrap();
 
-  let targets = get_inital_targets(&client, spider_path).unwrap();
+  let targets = get_initial_targets(&client, spider_path).unwrap();
   for target in &targets {
     println!("{}", target);
   }
@@ -50,7 +50,7 @@ fn load_authfile() -> Result<Client, Error> {
   Ok(client)
 }
 
-fn get_inital_targets(client: &Client, dump_path: &Path) -> Result<HashSet<Target>, Error> {
+fn get_initial_targets(client: &Client, dump_path: &Path) -> Result<HashSet<Target>, Error> {
   let mut targets = HashSet::new();
 
   let home_page = "home";
