@@ -1,7 +1,10 @@
 use egui::WidgetText;
 use tidal_rs::api::{
   modules::{
-    collection_modules::{AlbumCollectionModule, AnyMediaCollectionModule, MixCollectionModule, PlaylistCollectionModule, TrackCollectionModule},
+    collection_modules::{
+      AlbumCollectionModule, AnyMediaCollectionModule, MixCollectionModule, PageLinksCloudCollectionModule, PageLinksCollectionModule,
+      PlaylistCollectionModule, TrackCollectionModule,
+    },
     HighlightModule, ModuleType,
   },
   Album, Artist, MediaType, Mix, Page, PageModule, Playlist, Track,
@@ -39,6 +42,8 @@ fn module_ui(ui: &mut egui::Ui, module_type: &ModuleType) {
     HighlightModule(module) => ui.module_highlight(module),
     MixList(module) => ui.module_mix_collection(module),
     MixedTypesList(module) => ui.module_any_media_collection(module),
+    PageLinks(module) => ui.module_links_collection(module),
+    PageLinksCloud(module) => ui.module_links_cloud_collection(module),
     PlaylistList(module) => ui.module_playlist_collection(module),
     TrackList(module) => ui.module_track_collection(module),
     _ => {
@@ -107,6 +112,8 @@ pub trait ModuleUiExtension {
   fn module_highlight(&mut self, module: &HighlightModule);
   fn module_mix_collection(&mut self, module: &MixCollectionModule);
   fn module_any_media_collection(&mut self, module: &AnyMediaCollectionModule);
+  fn module_links_collection(&mut self, module: &PageLinksCollectionModule);
+  fn module_links_cloud_collection(&mut self, module: &PageLinksCloudCollectionModule);
   fn module_playlist_collection(&mut self, module: &PlaylistCollectionModule);
   fn module_track_collection(&mut self, module: &TrackCollectionModule);
 }
@@ -157,6 +164,28 @@ impl ModuleUiExtension for egui::Ui {
     self.shelf(|ui| {
       for item in items {
         ui.card(|ui| media_ui(ui, &item));
+      }
+    });
+  }
+  fn module_links_collection(&mut self, module: &PageLinksCollectionModule) {
+    let items = module.paged_list.paging.items.clone();
+    self.shelf(|ui| {
+      for item in items {
+        ui.card(|ui| {
+          ui.heading(item.title.unwrap_or("Unknown Link".to_owned()));
+          ui.label(item.api_path.unwrap_or("No Path".to_owned()));
+        });
+      }
+    });
+  }
+  fn module_links_cloud_collection(&mut self, module: &PageLinksCloudCollectionModule) {
+    let items = module.paged_list.paging.items.clone();
+    self.shelf(|ui| {
+      for item in items {
+        ui.card(|ui| {
+          ui.heading(item.title.unwrap_or("Unknown Link".to_owned()));
+          ui.label(item.api_path.unwrap_or("No Path".to_owned()));
+        });
       }
     });
   }
