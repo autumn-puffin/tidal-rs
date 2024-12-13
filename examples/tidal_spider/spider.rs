@@ -26,6 +26,7 @@ impl<T: Crawl> Crawl for Option<T> {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[allow(dead_code)]
 pub enum Target {
   Page(String),
   Album(u64),

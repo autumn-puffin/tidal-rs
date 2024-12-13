@@ -35,8 +35,8 @@ impl Crawl for ModuleType {
       ModuleType::AlbumItems(album_items_collection_module) => targets.extend(album_items_collection_module.identify_targets()?),
       ModuleType::ArticleList(_) => {}
       ModuleType::Social(_) => {}
-      ModuleType::GenreHeader(genre_header_module) => todo!(),
-      ModuleType::ContributorHeader(contributor_header_module) => todo!(),
+      ModuleType::GenreHeader(_genre_header_module) => todo!(),
+      ModuleType::ContributorHeader(_contributor_header_module) => todo!(),
       ModuleType::FeaturedPromotions => todo!(),
       ModuleType::PageLinksImage => todo!(),
       ModuleType::Radio => todo!(),
