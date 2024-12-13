@@ -64,15 +64,21 @@ fn get_initial_targets(client: &Client, dump_path: &Path) -> Result<HashSet<Targ
 
 fn get_page_targets(client: &Client, dump_path: &Path, page_path: &str) -> Result<HashSet<Target>, Error> {
   println!("getting page: {}", page_path);
+  let regex = regex::Regex::new(r"\?.*Id=").unwrap();
+  let file_path = &regex.replace_all(page_path, "/").to_string();
   let page_json = client.get_page_response(page_path)?.text()?;
-  if let Some(p) = dump_path.join(page_path).parent() {
+  if let Some(p) = dump_path.join(file_path).parent() {
     std::fs::create_dir_all(p)?;
   }
-  std::fs::write(dump_path.join(format!("{}.json", page_path)), &page_json).unwrap();
-
-  let page: Page = serde_json::from_str(&page_json)?;
-  std::fs::write(dump_path.join(format!("{}.ron", page_path)), format!("{:#?}", page)).unwrap();
-
-  let targets = page.identify_targets()?;
-  Ok(targets)
+  match serde_json::from_str::<Page>(&page_json) {
+    Ok(page) => {
+      std::fs::write(dump_path.join(format!("{}.ron", file_path)), format!("{:#?}", page)).unwrap();
+      let targets = page.identify_targets()?;
+      Ok(targets)
+    }
+    Err(e) => {
+      std::fs::write(dump_path.join(format!("{}.json", file_path)), &page_json).unwrap();
+      Err(e.into())
+    }
+  }
 }
