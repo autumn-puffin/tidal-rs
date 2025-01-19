@@ -122,7 +122,7 @@ impl UserFlow for AuthClient {
       pkce_challenge
     );
 
-    Ok(UserFlowInfo { auth_url, pkce_verifier })
+    Ok(UserFlowInfo::new(auth_url, pkce_verifier))
   }
   fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {
     let endpoint = Endpoint::OAuth2Token;
@@ -130,13 +130,13 @@ impl UserFlow for AuthClient {
     let client_credentials = &self.client_credentials;
 
     let redirect_uri = self.redirect_uri.as_deref().ok_or(AuthError::MissingRedirectUri)?;
-    let verifier = info.pkce_verifier;
+    let verifier = info.verifier();
 
     let params = &[
       ("client_id", self.client_credentials.id()),
       ("code", &code),
       ("redirect_uri", redirect_uri),
-      ("code_verifier", &verifier),
+      ("code_verifier", verifier),
     ];
 
     let res = oauth_request_helper(&Client::new(), endpoint, grant, client_credentials, Some(params)).send()?;

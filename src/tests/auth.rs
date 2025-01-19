@@ -25,7 +25,7 @@ fn test_client_flow() {
 fn test_user_flow() {
   let mut auth = get_auth();
   let response = auth.user_login_init().unwrap();
-  println!("Please Go To {:?}\nPaste the redirected url below after logging in\n", response.auth_url);
+  println!("Please Go To {:?}\nPaste the redirected url below after logging in\n", response.url());
   let mut code = String::new();
   std::io::stdin().read_line(&mut code).unwrap();
   let code = Url::parse(&code)

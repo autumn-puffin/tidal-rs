@@ -79,19 +79,53 @@ struct UserClientApplication {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Session {
-  pub session_id: Uuid,
-  pub user_id: u64,
-  pub country_code: CountryCode,
-  pub channel_id: u64,
-  pub partner_id: u64,
-  pub client: SessionClient,
+  session_id: Uuid,
+  user_id: u64,
+  country_code: CountryCode,
+  channel_id: u64,
+  partner_id: u64,
+  client: SessionClient,
+}
+impl Session {
+  pub fn id(&self) -> &Uuid {
+    &self.session_id
+  }
+  pub fn user_id(&self) -> &u64 {
+    &self.user_id
+  }
+  pub fn country_code(&self) -> &CountryCode {
+    &self.country_code
+  }
+  pub fn channel_id(&self) -> &u64 {
+    &self.channel_id
+  }
+  pub fn partner_id(&self) -> &u64 {
+    &self.partner_id
+  }
+  pub fn client(&self) -> &SessionClient {
+    &self.client
+  }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionClient {
-  pub id: u64,
-  pub name: String,
-  pub authorized_for_offline: bool,
-  pub authorized_for_offline_date: Option<u64>,
+  id: u64,
+  name: String,
+  authorized_for_offline: bool,
+  authorized_for_offline_date: Option<u64>,
+}
+impl SessionClient {
+  pub fn id(&self) -> &u64 {
+    &self.id
+  }
+  pub fn name(&self) -> &String {
+    &self.name
+  }
+  pub fn authorized_for_offline(&self) -> &bool {
+    &self.authorized_for_offline
+  }
+  pub fn authorized_for_offline_date(&self) -> &Option<u64> {
+    &self.authorized_for_offline_date
+  }
 }

@@ -66,8 +66,19 @@ pub trait RefreshFlow {
 
 #[derive(Debug)]
 pub struct UserFlowInfo {
-  pub auth_url: String,
-  pub pkce_verifier: String,
+  auth_url: String,
+  pkce_verifier: String,
+}
+impl UserFlowInfo {
+  pub fn new(auth_url: String, pkce_verifier: String) -> Self {
+    Self { auth_url, pkce_verifier }
+  }
+  pub fn url(&self) -> &str {
+    &self.auth_url
+  }
+  pub fn verifier(&self) -> &str {
+    &self.pkce_verifier
+  }
 }
 
 #[derive(Debug, Deserialize)]

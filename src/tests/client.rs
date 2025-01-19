@@ -17,7 +17,7 @@ fn sessions() {
   let mut client = client_from_authfile().unwrap();
   client.refresh().unwrap();
   let session_from_auth = client.get_session_from_auth().unwrap();
-  let session = client.get_session(&session_from_auth.session_id.to_string()).unwrap();
+  let session = client.get_session(&session_from_auth.id().to_string()).unwrap();
   assert_eq!(session, session_from_auth);
 }
 

@@ -283,13 +283,13 @@ impl UserFlow for Client {
     )?
     .to_string();
 
-    Ok(UserFlowInfo { auth_url, pkce_verifier })
+    Ok(UserFlowInfo::new(auth_url, pkce_verifier))
   }
 
   fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {
     let endpoint = Endpoint::OAuth2Token;
     let grant = GrantType::AuthorizationCode;
-    let verifier = info.pkce_verifier.as_str();
+    let verifier = info.verifier();
     let id = self.client_credentials.id().to_owned();
     let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::MissingRedirectUri)?.clone();
 
