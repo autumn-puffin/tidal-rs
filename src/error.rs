@@ -34,8 +34,8 @@ impl From<reqwest::Error> for Error {
 }
 impl From<ApiErrorResponse> for Error {
   fn from(err: ApiErrorResponse) -> Self {
-    match err.error.clone().unwrap_or_default().as_str() {
-      "authorization_pending" => Error::AuthError(AuthError::AuthorizationPending),
+    match err.error.as_deref() {
+      Some("authorization_pending") => Error::AuthError(AuthError::AuthorizationPending),
       _ => Error::ApiError(err),
     }
   }
@@ -48,8 +48,12 @@ impl From<url::ParseError> for Error {
 
 #[derive(Debug, Deserialize)]
 pub struct ApiErrorResponse {
+  #[serde(alias = "httpStatus")]
   pub status: u16,
   pub error: Option<String>,
+  #[serde(alias = "subStatus")]
   pub sub_status: Option<u16>,
+  #[serde(alias = "description")]
   pub error_description: Option<String>,
 }
+
