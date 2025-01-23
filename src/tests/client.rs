@@ -1,7 +1,8 @@
+use uuid::Uuid;
+
 use crate::{
   client::{
-    album_catalogue::AlbumCatalogue as _, artist_catalogue::ArtistCatalogue as _, video_catalogue::VideoCatalogue as _, Catalogue as _,
-    RefreshFlow as _, Sessions, TrackCatalogue, Users,
+    album_catalogue::AlbumCatalogue as _, artist_catalogue::ArtistCatalogue as _, playlist_catalogue::PlaylistCatalogue as _, video_catalogue::VideoCatalogue as _, Catalogue as _, RefreshFlow as _, Sessions, TrackCatalogue, Users
   },
   utils::client_from_authfile,
 };
@@ -11,6 +12,7 @@ const EXAMPLE_MIX_ID: &str = "00011a5335dc6c5c31431ca489f7d6"; // Death Grips Ra
 const EXAMPLE_ALBUM_ID: u64 = 14558039; // The Money Store - Death Grips
 const EXAMPLE_TRACK_ID: u64 = 14558045; // I've Seen Footage - The Money Store - Death Grips
 const EXAMPLE_VIDEO_ID: u64 = 29484637; // Get Got - The Money Store - Death Grips
+const EXAMPLE_UNOWNED_PLAYLIST_ID: Uuid = Uuid::from_u128(0x395140403d8a40d7b4e46edb48b90a42); // The Prodigy Essentials - Tidal
 
 #[test]
 fn sessions() {
@@ -84,4 +86,14 @@ fn albums() {
   client.get_album_credits(album_id, true).unwrap();
   client.get_album_items(album_id, &0, &10).unwrap();
   client.get_album_items_with_credits(album_id, &0, &10, true).unwrap();
+}
+
+#[test]
+fn playlists() {
+  let playlist_id = &EXAMPLE_UNOWNED_PLAYLIST_ID;
+  let mut client = client_from_authfile().unwrap();
+  client.refresh().unwrap();
+  client.get_playlist(playlist_id).unwrap();
+  client.get_playlist_items(playlist_id, &0, &10).unwrap();
+  client.get_playlist_recommendations(playlist_id, &0, &10).unwrap();
 }

@@ -2,6 +2,8 @@
 
 use std::fmt::{Display, Formatter};
 
+use uuid::Uuid;
+
 /// Base urls for accessing the Tidal API, defaults to the production urls
 pub mod base_urls {
   pub use prod::*;
@@ -54,6 +56,9 @@ pub enum Endpoint<'a> {
   AlbumsItems(&'a u64),
   AlbumsItemsWithCredits(&'a u64),
   AlbumsReview(&'a u64),
+  Playlists(&'a Uuid),
+  PlaylistsItems(&'a Uuid),
+  PlaylistsRecommendations(&'a Uuid),
 }
 impl Display for Endpoint<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
@@ -88,6 +93,9 @@ impl Display for Endpoint<'_> {
       Self::AlbumsItems(id) => (base_urls::API_URL_V1, format!("albums/{id}/items")),
       Self::AlbumsItemsWithCredits(id) => (base_urls::API_URL_V1, format!("albums/{id}/items/credits")),
       Self::AlbumsReview(id) => (base_urls::API_URL_V1, format!("albums/{id}/review")),
+      Self::Playlists(id) => (base_urls::API_URL_V1, format!("playlists/{id}")),
+      Self::PlaylistsItems(id) => (base_urls::API_URL_V1, format!("playlists/{id}/items")),
+      Self::PlaylistsRecommendations(id) => (base_urls::API_URL_V1, format!("playlists/{id}/recommendations/items")),
     };
     write! {f, "{}{}", base, path}
   }

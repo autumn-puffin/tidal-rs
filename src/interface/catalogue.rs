@@ -7,6 +7,7 @@ pub mod artist_catalogue;
 pub mod search;
 pub mod track_catalogue;
 pub mod video_catalogue;
+pub mod playlist_catalogue;
 
 pub trait Catalogue: Auth {
   fn get_country(&self) -> Result<&CountryCode>;
