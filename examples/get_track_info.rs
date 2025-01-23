@@ -4,7 +4,7 @@ use tidal_rs::{
   client::{Client, ClientCreds},
   interface::{auth::*, catalogue::*},
 };
-use track_catalogue::TrackCatalogue;
+use track::TrackCatalogue;
 
 fn get_client() -> Client {
   Client::new(ClientCreds::new(dotenv!("ClientID").to_owned(), dotenv!("ClientSecret").to_owned()))

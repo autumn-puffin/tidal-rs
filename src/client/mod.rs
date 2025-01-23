@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 pub use crate::interface::{
   auth::{flows::*, *},
-  catalogue::{track_catalogue::*, *},
+  catalogue::{track::*, *},
   users::*,
 };
 use crate::{
@@ -18,10 +18,10 @@ use crate::{
   endpoints::Endpoint,
   utils, Result,
 };
-use album_catalogue::AlbumCatalogue;
-use artist_catalogue::ArtistCatalogue;
+use album::AlbumCatalogue;
+use artist::ArtistCatalogue;
 use isocountry::CountryCode;
-use playlist_catalogue::PlaylistCatalogue;
+use playlist::PlaylistCatalogue;
 use reqwest::{
   blocking::{Client as ReqwestClient, Response},
   header::HeaderMap,
@@ -37,7 +37,7 @@ use auth::{AuthClient, AuthCreds, TokenResponse};
 /// Standalone catalogue client implimentation
 pub mod catalogue;
 use catalogue::CatalogueClient;
-use video_catalogue::VideoCatalogue;
+use video::VideoCatalogue;
 
 /// A client for interacting with the Tidal API, implimenting all of the available interfaces.
 pub struct Client {
@@ -539,35 +539,35 @@ impl AlbumCatalogue for Client {
   }
 }
 impl PlaylistCatalogue for Client {
-    fn get_playlist(&self, playlist_id: &Uuid) -> Result<crate::api::Playlist> {
-        let endpoint = Endpoint::Playlists(playlist_id);
-        let response = self.get_endpoint_response(endpoint)?;
-        let etag = response.headers().get("ETag").map(|v| v.to_str().unwrap().to_string());
-        let mut playlist: crate::api::Playlist = response.json()?;
-        playlist.etag = etag;
-        Ok(playlist)
-    }
+  fn get_playlist(&self, playlist_id: &Uuid) -> Result<crate::api::Playlist> {
+    let endpoint = Endpoint::Playlists(playlist_id);
+    let response = self.get_endpoint_response(endpoint)?;
+    let etag = response.headers().get("ETag").map(|v| v.to_str().unwrap().to_string());
+    let mut playlist: crate::api::Playlist = response.json()?;
+    playlist.etag = etag;
+    Ok(playlist)
+  }
 
-    fn get_playlist_items(&self, playlist_id: &Uuid, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaItem>> {
-        let endpoint = Endpoint::PlaylistsItems(playlist_id);
-        let query: &[(&str, &str)] = &[
-            ("offset", &offset.to_string()),
-            ("limit", &limit.to_string()),
-            ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-            ("locale", "en_US"),
-        ];
-        Ok(self.get_helper(endpoint, Some(query), None, None)?.json()?)
-    }
+  fn get_playlist_items(&self, playlist_id: &Uuid, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaItem>> {
+    let endpoint = Endpoint::PlaylistsItems(playlist_id);
+    let query: &[(&str, &str)] = &[
+      ("offset", &offset.to_string()),
+      ("limit", &limit.to_string()),
+      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
+      ("locale", "en_US"),
+    ];
+    Ok(self.get_helper(endpoint, Some(query), None, None)?.json()?)
+  }
 
-    fn get_playlist_recommendations(&self, playlist_id: &Uuid, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaItem>> {
-        let endpoint = Endpoint::PlaylistsRecommendations(playlist_id);
-        let query: &[(&str, &str)] = &[
-            ("offset", &offset.to_string()),
-            ("limit", &limit.to_string()),
-            ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-        ];
-        Ok(self.get_helper(endpoint, Some(query), None, None)?.json()?)
-    }
+  fn get_playlist_recommendations(&self, playlist_id: &Uuid, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaItem>> {
+    let endpoint = Endpoint::PlaylistsRecommendations(playlist_id);
+    let query: &[(&str, &str)] = &[
+      ("offset", &offset.to_string()),
+      ("limit", &limit.to_string()),
+      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
+    ];
+    Ok(self.get_helper(endpoint, Some(query), None, None)?.json()?)
+  }
 }
 
 /// A simple struct for storing client credentials, with a custom Debug impl that redacts the client secret.

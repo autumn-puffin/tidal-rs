@@ -2,12 +2,12 @@ use super::auth::Auth;
 use crate::{api::Page, Result};
 use isocountry::CountryCode;
 
-pub mod album_catalogue;
-pub mod artist_catalogue;
+pub mod album;
+pub mod artist;
+pub mod playlist;
 pub mod search;
-pub mod track_catalogue;
-pub mod video_catalogue;
-pub mod playlist_catalogue;
+pub mod track;
+pub mod video;
 
 pub trait Catalogue: Auth {
   fn get_country(&self) -> Result<&CountryCode>;

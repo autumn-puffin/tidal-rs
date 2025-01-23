@@ -2,7 +2,8 @@ use uuid::Uuid;
 
 use crate::{
   client::{
-    album_catalogue::AlbumCatalogue as _, artist_catalogue::ArtistCatalogue as _, playlist_catalogue::PlaylistCatalogue as _, video_catalogue::VideoCatalogue as _, Catalogue as _, RefreshFlow as _, Sessions, TrackCatalogue, Users
+    album::AlbumCatalogue as _, artist::ArtistCatalogue as _, playlist::PlaylistCatalogue as _, video::VideoCatalogue as _, Catalogue as _,
+    RefreshFlow as _, Sessions, TrackCatalogue, Users,
   },
   utils::client_from_authfile,
 };
