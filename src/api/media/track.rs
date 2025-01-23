@@ -34,9 +34,9 @@ pub struct Track {
   pub album: Album,
   pub artist: Option<Artist>,
   pub artists: Vec<Artist>,
-  pub media_metadata: MediaMetadata,
+  pub media_metadata: Option<MediaMetadata>,
   pub audio_modes: Vec<AudioMode>,
-  pub stream_start_date: DateTime<Utc>,
+  pub stream_start_date: Option<DateTime<Utc>>,
 
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
