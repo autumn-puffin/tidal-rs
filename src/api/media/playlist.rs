@@ -8,6 +8,8 @@ use super::Artist;
 #[serde(rename_all = "camelCase")]
 pub struct Playlist {
   pub uuid: Uuid,
+  #[serde(skip)]
+  pub etag: Option<String>,
   pub title: String,
   pub description: Option<String>,
   pub url: Option<String>,
