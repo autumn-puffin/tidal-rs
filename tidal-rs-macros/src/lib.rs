@@ -15,6 +15,24 @@ pub fn get(args: TokenStream, input: TokenStream) -> TokenStream {
   let output: TokenStream2 = request.generate();
   output.into()
 }
+#[proc_macro_attribute]
+pub fn post(args: TokenStream, input: TokenStream) -> TokenStream {
+  let request = RequestFunction::new_from_attrib(Method::Post, args, input);
+  let output: TokenStream2 = request.generate();
+  output.into()
+}
+#[proc_macro_attribute]
+pub fn put(args: TokenStream, input: TokenStream) -> TokenStream {
+  let request = RequestFunction::new_from_attrib(Method::Put, args, input);
+  let output: TokenStream2 = request.generate();
+  output.into()
+}
+#[proc_macro_attribute]
+pub fn delete(args: TokenStream, input: TokenStream) -> TokenStream {
+  let request = RequestFunction::new_from_attrib(Method::Delete, args, input);
+  let output: TokenStream2 = request.generate();
+  output.into()
+}
 
 fn field_attribute<T: Field>(args: TokenStream, input: TokenStream) -> TokenStream {
   if let Ok(mut impl_block) = syn::parse::<ItemImpl>(input.clone()) {
@@ -57,4 +75,21 @@ pub fn basic_auth(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn bearer_auth(args: TokenStream, input: TokenStream) -> TokenStream {
   field_attribute::<BearerAuth>(args, input)
+}
+
+#[proc_macro_attribute]
+pub fn body_raw(_args: TokenStream, input: TokenStream) -> TokenStream {
+  input
+}
+#[proc_macro_attribute]
+pub fn body_json(_args: TokenStream, input: TokenStream) -> TokenStream {
+  input
+}
+#[proc_macro_attribute]
+pub fn body_form_url_encoded(_args: TokenStream, input: TokenStream) -> TokenStream {
+  input
+}
+#[proc_macro_attribute]
+pub fn body_multipart(_args: TokenStream, input: TokenStream) -> TokenStream {
+  input
 }
