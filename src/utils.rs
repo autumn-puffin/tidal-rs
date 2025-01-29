@@ -85,7 +85,8 @@ pub fn res_to_error(res: reqwest::blocking::Response) -> crate::Error {
     _ => err.into(),
   }
 }
-
+// this is used in tests but linter doesn't see it's used
+#[allow(dead_code)]
 pub fn client_from_authfile() -> Option<crate::client::Client> {
   let creds = std::fs::read_to_string("./auth.json").ok()?;
   let creds: AuthCreds = serde_json::from_str(&creds).ok()?;
