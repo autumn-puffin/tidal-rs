@@ -3,11 +3,16 @@ use crate::{api::Page, Result};
 use isocountry::CountryCode;
 
 pub mod album;
+pub use album::AlbumCatalogue;
 pub mod artist;
+pub use artist::ArtistCatalogue;
 pub mod playlist;
+pub use playlist::PlaylistCatalogue;
 pub mod search;
 pub mod track;
+pub use track::TrackCatalogue;
 pub mod video;
+pub use video::VideoCatalogue;
 
 pub trait Catalogue: Auth {
   fn get_country(&self) -> Result<&CountryCode>;

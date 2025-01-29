@@ -18,10 +18,7 @@ use crate::{
   endpoints::Endpoint,
   utils, Result,
 };
-use album::AlbumCatalogue;
-use artist::ArtistCatalogue;
 use isocountry::CountryCode;
-use playlist::PlaylistCatalogue;
 use reqwest::{
   blocking::{Client as ReqwestClient, Response},
   header::HeaderMap,
@@ -37,7 +34,6 @@ use auth::{AuthClient, AuthCreds, TokenResponse};
 /// Standalone catalogue client implimentation
 pub mod catalogue;
 use catalogue::CatalogueClient;
-use video::VideoCatalogue;
 
 /// A client for interacting with the Tidal API, implimenting all of the available interfaces.
 pub struct Client {
