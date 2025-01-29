@@ -58,7 +58,11 @@ impl RequestFunction {
     if let Some(bearer_auth) = &self.request.bearer_auth {
       call = quote::quote! { #call.bearer_auth(#bearer_auth) };
     } else if let Some(basic_auth) = &self.request.basic_auth {
-      call = quote::quote! { #call.basic_auth(#basic_auth) };
+      init = quote::quote! {
+        #init
+        let basic_auth: (&str, Option<&str>) = #basic_auth;
+      };
+      call = quote::quote! { #call.basic_auth(basic_auth.0, basic_auth.1) };
     }
 
     call = quote::quote! { #call.send()? };
