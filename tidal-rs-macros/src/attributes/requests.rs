@@ -107,28 +107,30 @@ impl Request {
     let mut body_type = BodyType::Raw;
 
     for attr in attrs.iter().rev() {
-      let list = match &attr.meta {
-        Meta::List(list) => list,
+      match &attr.meta {
+        Meta::List(list) => {
+          let path = list.path.clone();
+          match path.get_ident().map(Ident::to_string).unwrap_or_default().as_str() {
+            "client" => client = Some(list.tokens.clone()),
+            "base_url" => base_url = Some(list.tokens.clone()),
+            "headers" => headers = Some(list.tokens.clone()),
+            "body" => body = Some(list.tokens.clone()),
+            "query" => query = Some(list.tokens.clone()),
+            "shared_query" => shared_query = Some(list.tokens.clone()),
+            "basic_auth" => basic_auth = Some(list.tokens.clone()),
+            "bearer_auth" => bearer_auth = Some(list.tokens.clone()),
+            _ => continue,
+          }
+        }
+        Meta::Path(path) => match path.get_ident().map(Ident::to_string).unwrap_or_default().as_str() {
+          "body_raw" => body_type = BodyType::Raw,
+          "body_json" => body_type = BodyType::Json,
+          "body_form_url_encoded" => body_type = BodyType::FormUrlEncoded,
+          "body_multipart" => body_type = BodyType::Multipart,
+          _ => continue,
+        },
         _ => continue,
       };
-      let path = list.path.clone();
-
-      match path.get_ident().map(Ident::to_string).unwrap_or_default().as_str() {
-        "client" => client = Some(list.tokens.clone()),
-        "base_url" => base_url = Some(list.tokens.clone()),
-        "headers" => headers = Some(list.tokens.clone()),
-        "body" => body = Some(list.tokens.clone()),
-        "query" => query = Some(list.tokens.clone()),
-        "shared_query" => shared_query = Some(list.tokens.clone()),
-        "basic_auth" => basic_auth = Some(list.tokens.clone()),
-        "bearer_auth" => bearer_auth = Some(list.tokens.clone()),
-
-        "raw" => body_type = BodyType::Raw,
-        "json" => body_type = BodyType::Json,
-        "form_url_encoded" => body_type = BodyType::FormUrlEncoded,
-        "multipart" => body_type = BodyType::Multipart,
-        _ => continue,
-      }
     }
     let client = client.expect("A `client` attribute is required");
     let base_url = base_url.expect("A `base_url` attribute is required");
