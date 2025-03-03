@@ -151,3 +151,20 @@ impl Field for BearerAuth {
     add_to_impl_members(self, "bearer_auth", impl_block);
   }
 }
+
+pub struct ResponseHandler(Expr);
+impl Parse for ResponseHandler {
+  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+    Ok(Self(input.parse()?))
+  }
+}
+impl ToTokens for ResponseHandler {
+  fn to_tokens(&self, tokens: &mut TokenStream2) {
+    self.0.to_tokens(tokens);
+  }
+}
+impl Field for ResponseHandler {
+  fn add_to_impl_members(&self, impl_block: &mut syn::ItemImpl) {
+    add_to_impl_members(self, "response_handler", impl_block);
+  }
+}

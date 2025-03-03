@@ -76,6 +76,10 @@ pub fn basic_auth(args: TokenStream, input: TokenStream) -> TokenStream {
 pub fn bearer_auth(args: TokenStream, input: TokenStream) -> TokenStream {
   field_attribute::<BearerAuth>(args, input)
 }
+#[proc_macro_attribute]
+pub fn response_handler(args: TokenStream, input: TokenStream) -> TokenStream {
+  field_attribute::<ResponseHandler>(args, input)
+}
 
 #[proc_macro_attribute]
 pub fn body_raw(_args: TokenStream, input: TokenStream) -> TokenStream {

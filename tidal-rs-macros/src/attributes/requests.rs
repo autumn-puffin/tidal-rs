@@ -3,7 +3,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::{Expr, Ident, ImplItemFn, Meta};
 
-use super::fields::{BaseUrl, BasicAuth, BearerAuth, Body, Client, Headers, Query, SharedQuery};
+use super::fields::{BaseUrl, BasicAuth, BearerAuth, Body, Client, Headers, Query, ResponseHandler, SharedQuery};
 
 pub struct RequestFunction {
   pub fn_item: ImplItemFn,
@@ -28,8 +28,10 @@ impl RequestFunction {
       Method::Put => quote::quote! { put },
       Method::Delete => quote::quote! { delete },
     };
+
     let mut init = Default::default();
     let mut call = quote::quote! { #client.#method(#url) };
+
     if let Some(headers) = &self.request.headers {
       init = quote::quote! {
         #init
@@ -65,11 +67,28 @@ impl RequestFunction {
       call = quote::quote! { #call.basic_auth(basic_auth.0, basic_auth.1) };
     }
 
+    let return_type = match &self.fn_item.sig.output {
+      syn::ReturnType::Default => todo!(),
+      syn::ReturnType::Type(_, boxed_type) => boxed_type,
+    };
+    let response_handler = {
+      if let Some(response_handler) = &self.request.response_handler {
+        response_handler.into_token_stream()
+      } else {
+        quote::quote! { |res: Response| {
+          let ret: #return_type = Ok(res.json()?);
+          ret
+        } }
+      }
+    };
+
     call = quote::quote! { #call.send()? };
     let block = quote::quote! {
       {
         #init
-        Ok(#call.json()?)
+        let response_handler = #response_handler;
+        let res: Response = #call;
+        response_handler(res)
       }
     };
     let mut func = self.fn_item.clone();
@@ -90,6 +109,7 @@ pub struct Request {
   pub shared_query: Option<SharedQuery>,
   pub basic_auth: Option<BasicAuth>,
   pub bearer_auth: Option<BearerAuth>,
+  pub response_handler: Option<ResponseHandler>,
 }
 impl Request {
   pub fn new(method: Method, path: TokenStream, func: &ImplItemFn) -> Self {
@@ -104,6 +124,7 @@ impl Request {
     let mut shared_query = None;
     let mut basic_auth = None;
     let mut bearer_auth = None;
+    let mut response_handler = None;
     let mut body_type = BodyType::Raw;
 
     for attr in attrs.iter().rev() {
@@ -119,6 +140,7 @@ impl Request {
             "shared_query" => shared_query = Some(list.tokens.clone()),
             "basic_auth" => basic_auth = Some(list.tokens.clone()),
             "bearer_auth" => bearer_auth = Some(list.tokens.clone()),
+            "response_handler" => response_handler = Some(list.tokens.clone()),
             _ => continue,
           }
         }
@@ -143,6 +165,7 @@ impl Request {
     let shared_query = shared_query.map(|q| syn::parse2(q).expect("Failed to parse shared_query"));
     let basic_auth = basic_auth.map(|a| syn::parse2(a).expect("Failed to parse basic_auth"));
     let bearer_auth = bearer_auth.map(|a| syn::parse2(a).expect("Failed to parse bearer_auth"));
+    let response_handler = response_handler.map(|h| syn::parse2(h).expect("Failed to parse response_handler"));
 
     Self {
       client,
@@ -156,6 +179,7 @@ impl Request {
       shared_query,
       basic_auth,
       bearer_auth,
+      response_handler,
     }
   }
 }
