@@ -25,7 +25,9 @@ pub mod base_urls {
 
 /// Enum of available endpoints for the Tidal API
 #[derive(Debug, Clone, Copy)]
-pub enum Endpoint<'a> {
+#[deprecated = "Deprecated in favor of the attribute macros"]
+#[allow(dead_code)]
+pub(crate) enum Endpoint<'a> {
   OAuth2Token,
   OAuth2DeviceAuth,
   LoginAuthorize,
@@ -60,6 +62,7 @@ pub enum Endpoint<'a> {
   PlaylistsItems(&'a Uuid),
   PlaylistsRecommendations(&'a Uuid),
 }
+#[allow(deprecated)]
 impl Display for Endpoint<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
     let (base, path) = match self {
