@@ -13,7 +13,7 @@ pub struct ArtistHeaderModule {
   // this causes errors if null
   // #[flat_path(path = ["artistMix", "id"])]
   // pub artist_mix: Option<String>,
-  pub mixes: MixList,
+  pub mixes: Option<MixList>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
