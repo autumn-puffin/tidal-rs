@@ -15,7 +15,6 @@ use crate::{
     Lyrics, MediaCredit, MediaRecommendation, MixId, Page, Paging, PlaybackInfo, PlaybackInfoOptions, Session, Track, User, UserClient,
     UserSubscription,
   },
-  endpoints::Endpoint,
   utils, Result,
 };
 use isocountry::CountryCode;
@@ -24,7 +23,9 @@ use reqwest::{
   header::HeaderMap,
 };
 use serde::{Deserialize, Serialize};
-use tidal_rs_macros::{base_url, basic_auth, bearer_auth, body, body_form_url_encoded, client, delete, get, headers, post, query, shared_query};
+use tidal_rs_macros::{
+  base_url, basic_auth, bearer_auth, body, body_form_url_encoded, client, delete, get, headers, post, query, response_handler, shared_query,
+};
 use url::Url;
 use uuid::Uuid;
 
@@ -137,63 +138,29 @@ impl Client {
       }
     }
   }
+}
+#[client(self.http_client)]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[query(&self.shared_query())]
+#[response_handler(|res| {Ok(res)})]
+impl Client {
   /// get a page as a `Response`
-  pub fn get_page_response(&self, page: &str) -> Result<Response> {
-    let endpoint = Endpoint::Pages(page);
-    let query = &[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")];
-
-    self.get_helper(endpoint, Some(query), None, None)
-  }
+  #[get(format!("/pages/{page}"))]
+  #[base_url("https://api.tidal.com/v1")]
+  pub fn get_page_response(&self, page: &str) -> Result<Response> {}
   /// get an endpoint as a `Response`
-  pub fn get_endpoint_response(&self, endpoint: Endpoint) -> Result<Response> {
-    let query = &[("countryCode", self.get_country()?.alpha2()), ("locale", "en_US")];
-    self.get_helper(endpoint, Some(query), None, None)
-  }
+  #[get(path)]
+  #[base_url(base_url)]
+  pub fn get_endpoint_response(&self, base_url: &str, path: &str) -> Result<Response> {}
 }
 impl Client {
-  /// Helper function for making oauth requests
-  fn oauth_helper(&mut self, endpoint: Endpoint, grant: GrantType, params: Option<&[(&str, &str)]>) -> Result<()> {
-    let client_creds = &self.client_credentials;
-    let res = utils::oauth_request_helper(&self.http_client, endpoint, grant, client_creds, params).send()?;
-    if !res.status().is_success() {
-      return Err(utils::res_to_error(res));
-    }
-    let auth_creds = AuthCreds::new(grant, self.client_credentials.clone(), res.json::<TokenResponse>()?);
-    let country = auth_creds.auth_user().map(|user| user.country_code);
-
-    self.auth_credentials = Some(auth_creds);
-    self.country = country;
-    Ok(())
-  }
-  /// Helper function for making get requests
-  fn get_helper(
-    &self,
-    endpoint: Endpoint,
-    query: Option<&[(&str, &str)]>,
-    form: Option<&[(&str, &str)]>,
-    headers: Option<&[(&str, &str)]>,
-  ) -> Result<Response> {
-    let auth = self.get_credentials().ok();
-    let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
-    let headers = HeaderMap::try_from(headers).unwrap();
-    let res = self
-      .http_client
-      .get(endpoint.to_string())
-      .query(query.unwrap_or_default())
-      .form(form.unwrap_or_default())
-      .headers(headers)
-      .bearer_auth(auth.map(|a| a.access_token()).unwrap_or_default())
-      .send()?;
-    if !res.status().is_success() {
-      return Err(utils::res_to_error(res));
-    }
-    Ok(res)
-  }
-
   fn bearer_auth(&self) -> Option<&str> {
     self.get_credentials().ok().map(|a| a.access_token())
   }
-
+  fn basic_auth(&self) -> (&str, Option<&str>) {
+    let creds = self.client_credentials.as_tuple();
+    (creds.0, Some(creds.1))
+  }
   fn shared_query(&self) -> [(&str, &str); 3] {
     let cc = self.get_country().map_or("WW", |cc| cc.alpha2());
     [("countryCode", cc), ("locale", "en_US"), ("deviceType", "BROWSER")]
@@ -220,12 +187,24 @@ impl Sessions for Client {
   fn get_session(&self, session_id: &str) -> Result<Session> {}
 }
 impl ClientFlow for Client {
-  fn client_login(&mut self) -> Result<()> {
-    let endpoint = Endpoint::OAuth2Token;
-    let grant = GrantType::ClientCredentials;
+  #[get("/oauth2/token")]
+  #[client(self.http_client)]
+  #[base_url("https://auth.tidal.com/v1")]
+  #[basic_auth(self.basic_auth())]
+  #[shared_query(&self.shared_query())]
+  #[query(&("grant_type", GrantType::ClientCredentials))]
+  #[response_handler(|res: Response| {
+      if !res.status().is_success() {
+        return Err(utils::res_to_error(res));
+      }
+      let auth_creds = AuthCreds::new(GrantType::ClientCredentials, self.client_credentials.clone(), res.json::<TokenResponse>()?);
+      let country = auth_creds.auth_user().map(|user| user.country_code);
 
-    self.oauth_helper(endpoint, grant, None)
-  }
+      self.auth_credentials = Some(auth_creds);
+      self.country = country;
+      Ok(())
+  })]
+  fn client_login(&mut self) -> Result<()> {}
 }
 impl UserFlow for Client {
   fn user_login_init(&self) -> Result<UserFlowInfo> {
@@ -234,7 +213,7 @@ impl UserFlow for Client {
     let (pkce_challenge, pkce_verifier) = utils::new_pkce_pair();
 
     let auth_url = Url::parse_with_params(
-      &Endpoint::LoginAuthorize.to_string(),
+      "https://login.tidal.com/authorize",
       &[
         ("response_type", "code"),
         ("client_id", self.client_credentials.id()),
@@ -249,26 +228,34 @@ impl UserFlow for Client {
     Ok(UserFlowInfo::new(auth_url, pkce_verifier))
   }
 
-  fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {
-    let endpoint = Endpoint::OAuth2Token;
-    let grant = GrantType::AuthorizationCode;
-    let verifier = info.verifier();
-    let id = self.client_credentials.id().to_owned();
-    let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::MissingRedirectUri)?.clone();
+  #[get("/oauth2/token")]
+  #[client(self.http_client)]
+  #[base_url("https://auth.tidal.com/v1")]
+  #[basic_auth(self.basic_auth())]
+  #[shared_query(&self.shared_query())]
+  #[query(&[
+    ("code_verifier", info.verifier()),
+    ("code", &code),
+    ("client_id", self.client_credentials.id()),
+    ("redirect_uri", &self.redirect_uri.as_ref().ok_or(AuthError::MissingRedirectUri)?.clone()),
+    ("grant_type", GrantType::AuthorizationCode.as_str()),
+  ])]
+  #[response_handler(|res: Response| {
+    if !res.status().is_success() {
+      return Err(utils::res_to_error(res));
+    }
+    let auth_creds = AuthCreds::new(GrantType::AuthorizationCode, self.client_credentials.clone(), res.json::<TokenResponse>()?);
+    let country = auth_creds.auth_user().map(|user| user.country_code);
 
-    let params = &[
-      ("code_verifier", verifier),
-      ("code", &code),
-      ("client_id", &id),
-      ("redirect_uri", &redirect_uri),
-    ];
-
-    self.oauth_helper(endpoint, grant, Some(params))
-  }
+    self.auth_credentials = Some(auth_creds);
+    self.country = country;
+    Ok(())
+  })]
+  fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {}
 }
 #[client(self.http_client)]
 #[base_url("https://auth.tidal.com/v1/")]
-#[basic_auth((self.get_client_id(), Some(self.get_client_secret())))]
+#[basic_auth(self.basic_auth())]
 #[shared_query(&self.shared_query())]
 impl DeviceFlow for Client {
   #[post("oauth2/device_authorization")]
@@ -278,14 +265,25 @@ impl DeviceFlow for Client {
   ])]
   fn device_login_init(&self) -> Result<crate::interface::auth::flows::DeviceFlowResponse> {}
 
-  fn try_device_login_finalize(&mut self, response: &crate::interface::auth::flows::DeviceFlowResponse) -> Result<()> {
-    let endpoint = Endpoint::OAuth2Token;
-    let grant = GrantType::DeviceCode;
-    let id = self.client_credentials.id().to_owned();
-    let params = &[("scope", "r_usr+w_usr+w_sub"), ("client_id", &id), ("device_code", &response.device_code)];
+  #[get("oauth2/token")]
+  #[query(&[
+    ("scope", "r_usr+w_usr+w_sub"),
+    ("client_id", self.client_credentials.id()),
+    ("device_code", &response.device_code),
+    ("grant_type", GrantType::DeviceCode.as_str()),
+  ])]
+  #[response_handler(|res: Response| {
+    if !res.status().is_success() {
+      return Err(utils::res_to_error(res));
+    }
+    let auth_creds = AuthCreds::new(GrantType::DeviceCode, self.client_credentials.clone(), res.json::<TokenResponse>()?);
+    let country = auth_creds.auth_user().map(|user| user.country_code);
 
-    self.oauth_helper(endpoint, grant, Some(params))
-  }
+    self.auth_credentials = Some(auth_creds);
+    self.country = country;
+    Ok(())
+  })]
+  fn try_device_login_finalize(&mut self, response: &crate::interface::auth::flows::DeviceFlowResponse) -> Result<()> {}
 }
 impl RefreshFlow for Client {
   fn refresh(&mut self) -> Result<()> {
@@ -318,15 +316,17 @@ impl Users for Client {
   #[delete(format!("/users/{client_id}/clients"))]
   fn deauthorize_client(&self, client_id: &u64) -> Result<()> {}
 }
+#[client(self.http_client)]
+#[base_url("https://api.tidal.com/v1")]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[shared_query(&self.shared_query())]
 impl Catalogue for Client {
   fn get_country(&self) -> Result<&CountryCode> {
     self.country.as_ref().ok_or(AuthError::Unauthenticated.into())
   }
 
-  fn get_page(&self, page: &str) -> Result<Page> {
-    let res = self.get_page_response(page)?;
-    Ok(res.json()?)
-  }
+  #[get(format!("/pages/{page}"))]
+  fn get_page(&self, page: &str) -> Result<Page> {}
 }
 #[client(self.http_client)]
 #[base_url("https://api.tidal.com/v1")]
@@ -452,14 +452,14 @@ impl AlbumCatalogue for Client {
 #[bearer_auth(self.bearer_auth().unwrap_or_default())]
 #[shared_query(&self.shared_query())]
 impl PlaylistCatalogue for Client {
-  fn get_playlist(&self, playlist_id: &Uuid) -> Result<crate::api::Playlist> {
-    let endpoint = Endpoint::Playlists(playlist_id);
-    let response = self.get_endpoint_response(endpoint)?;
-    let etag = response.headers().get("ETag").map(|v| v.to_str().unwrap().to_string());
-    let mut playlist: crate::api::Playlist = response.json()?;
+  #[get(format!("/playlists/{playlist_id}"))]
+  #[response_handler(|res: Response| -> Result<crate::api::Playlist> {
+    let etag = res.headers().get("ETag").map(|v| v.to_str().unwrap().to_string());
+    let mut playlist: crate::api::Playlist = res.json()?;
     playlist.etag = etag;
     Ok(playlist)
-  }
+  })]
+  fn get_playlist(&self, playlist_id: &Uuid) -> Result<crate::api::Playlist> {}
 
   #[get(format!("/playlists/{playlist_id}/items"))]
   #[query(&[
