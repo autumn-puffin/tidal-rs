@@ -86,8 +86,8 @@ impl RequestFunction {
     let block = quote::quote! {
       {
         #init
-        let response_handler = #response_handler;
         let res: Response = #call;
+        let mut response_handler = #response_handler;
         response_handler(res)
       }
     };
