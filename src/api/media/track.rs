@@ -30,7 +30,7 @@ pub struct Track {
   pub isrc: Option<String>,
   pub copyright: Option<String>,
   pub audio_quality: Option<AudioQuality>,
-  pub mixes: MixList,
+  pub mixes: Option<MixList>,
   pub album: Album,
   pub artist: Option<Artist>,
   pub artists: Vec<Artist>,

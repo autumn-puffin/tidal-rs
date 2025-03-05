@@ -14,8 +14,7 @@ pub struct Artist {
   pub artist_roles: Option<Vec<ArtistRole>>,
   pub picture: Option<Uuid>,
   pub url: Option<String>,
-  #[serde(default)]
-  pub mixes: MixList,
+  pub mixes: Option<MixList>,
   #[cfg(feature = "show_unmodeled")]
   #[serde(flatten)]
   pub unserialized: Box<std::collections::HashMap<String, serde_json::Value>>,
