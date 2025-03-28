@@ -30,11 +30,11 @@ impl Crawl for Artist {
     if let Some(id) = self.id {
       targets.insert(Target::Artist(id));
     }
-    let mixes = self.mixes.clone();
-    for mix in [mixes.artist_mix, mixes.master_artist_mix].iter().flatten() {
-      targets.insert(Target::Mix(mix.clone()));
+    if let Some(mixes) = self.mixes.clone() {
+      for mix in [mixes.artist_mix, mixes.master_artist_mix].iter().flatten() {
+        targets.insert(Target::Mix(mix.clone()));
+      }
     }
-
     Ok(targets)
   }
 }
@@ -59,9 +59,10 @@ impl Crawl for Track {
     targets.insert(Target::Track(self.id));
     targets.extend(self.artists.identify_targets()?);
     targets.extend(self.album.identify_targets()?);
-    let mixes = self.mixes.clone();
-    for mix in [mixes.track_mix, mixes.master_track_mix].iter().flatten() {
-      targets.insert(Target::Mix(mix.clone()));
+    if let Some(mixes) = self.mixes.clone() {
+      for mix in [mixes.artist_mix, mixes.master_artist_mix].iter().flatten() {
+        targets.insert(Target::Mix(mix.clone()));
+      }
     }
 
     Ok(targets)

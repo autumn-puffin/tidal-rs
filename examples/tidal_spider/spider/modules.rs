@@ -119,9 +119,10 @@ impl Crawl for ArtistHeaderModule {
   fn identify_targets(&self) -> Result<HashSet<Target>, Error> {
     let mut targets = HashSet::new();
     targets.extend(self.artist.identify_targets()?);
-    let mixes = self.mixes.clone();
-    for mix in [mixes.artist_mix, mixes.master_artist_mix].iter().flatten() {
-      targets.insert(Target::Mix(mix.clone()));
+    if let Some(mixes) = self.mixes.clone() {
+      for mix in [mixes.artist_mix, mixes.master_artist_mix].iter().flatten() {
+        targets.insert(Target::Mix(mix.clone()));
+      }
     }
     Ok(targets)
   }
