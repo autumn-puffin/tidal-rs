@@ -17,7 +17,7 @@ isocountry = "0.3"
 url = "2.5"
 chrono = {version = "0.4", features = ["serde"]}
 uuid = {version = "1.10", features = ["v4", "serde"]}
-
+tidal-rs-macros = { path = "tidal-rs-macros" }
 
 [dev-dependencies]
 dotenvy_macro = "0.15"
@@ -28,3 +28,6 @@ regex = "1.11"
 [features]
 default = ["show_unmodeled"]
 show_unmodeled = []
+
+[workspace]
+members = ["tidal-rs-macros"]

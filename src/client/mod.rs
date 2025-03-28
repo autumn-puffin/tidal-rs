@@ -15,7 +15,6 @@ use crate::{
     Lyrics, MediaCredit, MediaRecommendation, MixId, Page, Paging, PlaybackInfo, PlaybackInfoOptions, Session, Track, User, UserClient,
     UserSubscription,
   },
-  endpoints::Endpoint,
   utils, Result,
 };
 use isocountry::CountryCode;
@@ -24,6 +23,9 @@ use reqwest::{
   header::HeaderMap,
 };
 use serde::{Deserialize, Serialize};
+use tidal_rs_macros::{
+  base_url, basic_auth, bearer_auth, body, body_form_url_encoded, client, delete, get, headers, post, query, response_handler, shared_query,
+};
 use url::Url;
 use uuid::Uuid;
 
@@ -85,6 +87,12 @@ impl Client {
   pub fn get_client_credentials(&self) -> &ClientCreds {
     &self.client_credentials
   }
+  pub fn get_client_id(&self) -> &str {
+    self.client_credentials.id()
+  }
+  pub fn get_client_secret(&self) -> &str {
+    self.client_credentials.secret()
+  }
   /// get the auth credentials of the `Client`
   pub fn get_auth_credentials(&self) -> Option<&AuthCreds> {
     self.auth_credentials.as_ref()
@@ -130,105 +138,32 @@ impl Client {
       }
     }
   }
+}
+#[client(self.http_client)]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[query(&self.shared_query())]
+#[response_handler(|res| {Ok(res)})]
+impl Client {
   /// get a page as a `Response`
-  pub fn get_page_response(&self, page: &str) -> Result<Response> {
-    let endpoint = Endpoint::Pages(page);
-    let query = &[("countryCode", self.get_country()?.alpha2()), ("deviceType", "BROWSER")];
-
-    self.get_helper(endpoint, Some(query), None, None)
-  }
+  #[get(format!("/pages/{page}"))]
+  #[base_url("https://api.tidal.com/v1")]
+  pub fn get_page_response(&self, page: &str) -> Result<Response> {}
   /// get an endpoint as a `Response`
-  pub fn get_endpoint_response(&self, endpoint: Endpoint) -> Result<Response> {
-    let query = &[("countryCode", self.get_country()?.alpha2()), ("locale", "en_US")];
-    self.get_helper(endpoint, Some(query), None, None)
-  }
+  #[get(path)]
+  #[base_url(base_url)]
+  pub fn get_endpoint_response(&self, base_url: &str, path: &str) -> Result<Response> {}
 }
 impl Client {
-  /// Helper function for making oauth requests
-  fn oauth_helper(&mut self, endpoint: Endpoint, grant: GrantType, params: Option<&[(&str, &str)]>) -> Result<()> {
-    let client_creds = &self.client_credentials;
-    let res = utils::oauth_request_helper(&self.http_client, endpoint, grant, client_creds, params).send()?;
-    if !res.status().is_success() {
-      return Err(utils::res_to_error(res));
-    }
-    let auth_creds = AuthCreds::new(grant, self.client_credentials.clone(), res.json::<TokenResponse>()?);
-    let country = auth_creds.auth_user().map(|user| user.country_code);
-
-    self.auth_credentials = Some(auth_creds);
-    self.country = country;
-    Ok(())
+  fn bearer_auth(&self) -> Option<&str> {
+    self.get_credentials().ok().map(|a| a.access_token())
   }
-  /// Helper function for making get requests
-  fn get_helper(
-    &self,
-    endpoint: Endpoint,
-    query: Option<&[(&str, &str)]>,
-    form: Option<&[(&str, &str)]>,
-    headers: Option<&[(&str, &str)]>,
-  ) -> Result<Response> {
-    let auth = self.get_credentials().ok();
-    let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
-    let headers = HeaderMap::try_from(headers).unwrap();
-    let res = self
-      .http_client
-      .get(endpoint.to_string())
-      .query(query.unwrap_or_default())
-      .form(form.unwrap_or_default())
-      .headers(headers)
-      .bearer_auth(auth.map(|a| a.access_token()).unwrap_or_default())
-      .send()?;
-    if !res.status().is_success() {
-      return Err(utils::res_to_error(res));
-    }
-    Ok(res)
+  fn basic_auth(&self) -> (&str, Option<&str>) {
+    let creds = self.client_credentials.as_tuple();
+    (creds.0, Some(creds.1))
   }
-  /// Helper function for making post requests
-  fn post_helper(
-    &self,
-    endpoint: Endpoint,
-    query: Option<&[(&str, &str)]>,
-    form: Option<&[(&str, &str)]>,
-    headers: Option<&[(&str, &str)]>,
-  ) -> Result<Response> {
-    let auth = self.get_credentials().ok();
-    let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
-    let headers = HeaderMap::try_from(headers).unwrap();
-    let res = self
-      .http_client
-      .post(endpoint.to_string())
-      .query(query.unwrap_or_default())
-      .form(form.unwrap_or_default())
-      .headers(headers)
-      .bearer_auth(auth.map(|a| a.access_token()).unwrap_or_default())
-      .send()?;
-    if !res.status().is_success() {
-      return Err(utils::res_to_error(res));
-    }
-    Ok(res)
-  }
-  /// Helper function for making delete requests
-  fn delete_helper(
-    &self,
-    endpoint: Endpoint,
-    query: Option<&[(&str, &str)]>,
-    form: Option<&[(&str, &str)]>,
-    headers: Option<&[(&str, &str)]>,
-  ) -> Result<Response> {
-    let auth = self.get_credentials().ok();
-    let headers = &HashMap::from_iter(headers.unwrap_or_default().iter().map(|(k, v)| (k.to_string(), v.to_string())));
-    let headers = HeaderMap::try_from(headers).unwrap();
-    let res = self
-      .http_client
-      .delete(endpoint.to_string())
-      .query(query.unwrap_or_default())
-      .form(form.unwrap_or_default())
-      .headers(headers)
-      .bearer_auth(auth.map(|a| a.access_token()).unwrap_or_default())
-      .send()?;
-    if !res.status().is_success() {
-      return Err(utils::res_to_error(res));
-    }
-    Ok(res)
+  fn shared_query(&self) -> [(&str, &str); 3] {
+    let cc = self.get_country().map_or("WW", |cc| cc.alpha2());
+    [("countryCode", cc), ("locale", "en_US"), ("deviceType", "BROWSER")]
   }
 }
 impl Auth for Client {
@@ -240,26 +175,36 @@ impl Auth for Client {
     self.auth_credentials.as_mut().ok_or(AuthError::Unauthenticated.into())
   }
 }
+#[client(self.http_client)]
+#[base_url("https://api.tidal.com/v1")]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[shared_query(&self.shared_query())]
 impl Sessions for Client {
-  fn get_session_from_auth(&self) -> Result<Session> {
-    let endpoint = Endpoint::SessionsOfBearer;
-    let res = self.get_helper(endpoint, None, None, None)?;
-    Ok(res.json()?)
-  }
+  #[get("/sessions")]
+  fn get_session_from_auth(&self) -> Result<Session> {}
 
-  fn get_session(&self, session_id: &str) -> Result<Session> {
-    let endpoint = Endpoint::Sessions(session_id);
-    let res = self.get_helper(endpoint, None, None, None)?;
-    Ok(res.json()?)
-  }
+  #[get(format!("/sessions/{session_id}"))]
+  fn get_session(&self, session_id: &str) -> Result<Session> {}
 }
 impl ClientFlow for Client {
-  fn client_login(&mut self) -> Result<()> {
-    let endpoint = Endpoint::OAuth2Token;
-    let grant = GrantType::ClientCredentials;
+  #[get("/oauth2/token")]
+  #[client(self.http_client)]
+  #[base_url("https://auth.tidal.com/v1")]
+  #[basic_auth(self.basic_auth())]
+  #[shared_query(&self.shared_query())]
+  #[query(&("grant_type", GrantType::ClientCredentials))]
+  #[response_handler(|res: Response| {
+      if !res.status().is_success() {
+        return Err(utils::res_to_error(res));
+      }
+      let auth_creds = AuthCreds::new(GrantType::ClientCredentials, self.client_credentials.clone(), res.json::<TokenResponse>()?);
+      let country = auth_creds.auth_user().map(|user| user.country_code);
 
-    self.oauth_helper(endpoint, grant, None)
-  }
+      self.auth_credentials = Some(auth_creds);
+      self.country = country;
+      Ok(())
+  })]
+  fn client_login(&mut self) -> Result<()> {}
 }
 impl UserFlow for Client {
   fn user_login_init(&self) -> Result<UserFlowInfo> {
@@ -268,7 +213,7 @@ impl UserFlow for Client {
     let (pkce_challenge, pkce_verifier) = utils::new_pkce_pair();
 
     let auth_url = Url::parse_with_params(
-      &Endpoint::LoginAuthorize.to_string(),
+      "https://login.tidal.com/authorize",
       &[
         ("response_type", "code"),
         ("client_id", self.client_credentials.id()),
@@ -283,40 +228,62 @@ impl UserFlow for Client {
     Ok(UserFlowInfo::new(auth_url, pkce_verifier))
   }
 
-  fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {
-    let endpoint = Endpoint::OAuth2Token;
-    let grant = GrantType::AuthorizationCode;
-    let verifier = info.verifier();
-    let id = self.client_credentials.id().to_owned();
-    let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::MissingRedirectUri)?.clone();
+  #[get("/oauth2/token")]
+  #[client(self.http_client)]
+  #[base_url("https://auth.tidal.com/v1")]
+  #[basic_auth(self.basic_auth())]
+  #[shared_query(&self.shared_query())]
+  #[query(&[
+    ("code_verifier", info.verifier()),
+    ("code", &code),
+    ("client_id", self.client_credentials.id()),
+    ("redirect_uri", &self.redirect_uri.as_ref().ok_or(AuthError::MissingRedirectUri)?.clone()),
+    ("grant_type", GrantType::AuthorizationCode.as_str()),
+  ])]
+  #[response_handler(|res: Response| {
+    if !res.status().is_success() {
+      return Err(utils::res_to_error(res));
+    }
+    let auth_creds = AuthCreds::new(GrantType::AuthorizationCode, self.client_credentials.clone(), res.json::<TokenResponse>()?);
+    let country = auth_creds.auth_user().map(|user| user.country_code);
 
-    let params = &[
-      ("code_verifier", verifier),
-      ("code", &code),
-      ("client_id", &id),
-      ("redirect_uri", &redirect_uri),
-    ];
-
-    self.oauth_helper(endpoint, grant, Some(params))
-  }
+    self.auth_credentials = Some(auth_creds);
+    self.country = country;
+    Ok(())
+  })]
+  fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {}
 }
+#[client(self.http_client)]
+#[base_url("https://auth.tidal.com/v1/")]
+#[basic_auth(self.basic_auth())]
+#[shared_query(&self.shared_query())]
 impl DeviceFlow for Client {
-  fn device_login_init(&self) -> Result<crate::interface::auth::flows::DeviceFlowResponse> {
-    let endpoint = Endpoint::OAuth2DeviceAuth;
-    let params = &[("scope", "r_usr+w_usr+w_sub"), ("client_id", self.client_credentials.id())];
+  #[post("oauth2/device_authorization")]
+  #[query(&[
+    ("scope", "r_usr+w_usr+w_sub"), 
+    ("client_id", self.get_client_id())
+  ])]
+  fn device_login_init(&self) -> Result<crate::interface::auth::flows::DeviceFlowResponse> {}
 
-    let res = self.post_helper(endpoint, None, Some(params), None)?;
-    Ok(res.json()?)
-  }
+  #[get("oauth2/token")]
+  #[query(&[
+    ("scope", "r_usr+w_usr+w_sub"),
+    ("client_id", self.client_credentials.id()),
+    ("device_code", &response.device_code),
+    ("grant_type", GrantType::DeviceCode.as_str()),
+  ])]
+  #[response_handler(|res: Response| {
+    if !res.status().is_success() {
+      return Err(utils::res_to_error(res));
+    }
+    let auth_creds = AuthCreds::new(GrantType::DeviceCode, self.client_credentials.clone(), res.json::<TokenResponse>()?);
+    let country = auth_creds.auth_user().map(|user| user.country_code);
 
-  fn try_device_login_finalize(&mut self, response: &crate::interface::auth::flows::DeviceFlowResponse) -> Result<()> {
-    let endpoint = Endpoint::OAuth2Token;
-    let grant = GrantType::DeviceCode;
-    let id = self.client_credentials.id().to_owned();
-    let params = &[("scope", "r_usr+w_usr+w_sub"), ("client_id", &id), ("device_code", &response.device_code)];
-
-    self.oauth_helper(endpoint, grant, Some(params))
-  }
+    self.auth_credentials = Some(auth_creds);
+    self.country = country;
+    Ok(())
+  })]
+  fn try_device_login_finalize(&mut self, response: &crate::interface::auth::flows::DeviceFlowResponse) -> Result<()> {}
 }
 impl RefreshFlow for Client {
   fn refresh(&mut self) -> Result<()> {
@@ -327,196 +294,150 @@ impl RefreshFlow for Client {
       .refresh_with_http_client(&self.http_client)
   }
 }
+#[client(self.http_client)]
+#[base_url("https://api.tidal.com/v1")]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[shared_query(&self.shared_query())]
 impl Users for Client {
-  fn get_user(&self, user_id: &u64) -> Result<User> {
-    let endpoint = Endpoint::Users(user_id);
-    Ok(self.get_endpoint_response(endpoint)?.json()?)
-  }
+  #[get(format!("/users/{user_id}"))]
+  fn get_user(&self, user_id: &u64) -> Result<User> {}
 
-  fn get_user_subscription(&self, user_id: &u64) -> Result<UserSubscription> {
-    let endpoint = Endpoint::UsersSubscription(user_id);
-    Ok(self.get_endpoint_response(endpoint)?.json()?)
-  }
+  #[get(format!("/users/{user_id}/subscription"))]
+  fn get_user_subscription(&self, user_id: &u64) -> Result<UserSubscription> {}
 
-  fn get_user_clients(&self, user_id: &u64) -> Result<Paging<UserClient>> {
-    let endpoint = Endpoint::UsersClients(user_id);
-    Ok(self.get_endpoint_response(endpoint)?.json()?)
-  }
+  #[get(format!("/users/{user_id}/clients"))]
+  fn get_user_clients(&self, user_id: &u64) -> Result<Paging<UserClient>> {}
 
-  fn authorize_client(&self, client_id: &u64, name: &str) -> Result<()> {
-    let endpoint = Endpoint::UsersClients(client_id);
-    let form = &[("clientName", name), ("clientId", &client_id.to_string())];
-    self.post_helper(endpoint, None, Some(form), None)?;
-    Ok(())
-  }
+  #[post(format!("/users/{client_id}/clients"))]
+  #[body(&[("clientName", name), ("clientId", &client_id.to_string())])]
+  #[body_form_url_encoded]
+  fn authorize_client(&self, client_id: &u64, name: &str) -> Result<()> {}
 
-  fn deauthorize_client(&self, client_id: &u64) -> Result<()> {
-    let endpoint = Endpoint::UsersClients(client_id);
-    self.delete_helper(endpoint, None, None, None)?;
-    Ok(())
-  }
+  #[delete(format!("/users/{client_id}/clients"))]
+  fn deauthorize_client(&self, client_id: &u64) -> Result<()> {}
 }
+#[client(self.http_client)]
+#[base_url("https://api.tidal.com/v1")]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[shared_query(&self.shared_query())]
 impl Catalogue for Client {
   fn get_country(&self) -> Result<&CountryCode> {
     self.country.as_ref().ok_or(AuthError::Unauthenticated.into())
   }
 
-  fn get_page(&self, page: &str) -> Result<Page> {
-    let res = self.get_page_response(page)?;
-    Ok(res.json()?)
-  }
+  #[get(format!("/pages/{page}"))]
+  fn get_page(&self, page: &str) -> Result<Page> {}
 }
+#[client(self.http_client)]
+#[base_url("https://api.tidal.com/v1")]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[shared_query(&self.shared_query())]
 impl TrackCatalogue for Client {
-  fn get_track(&self, track_id: &u64) -> Result<Track> {
-    let endpoint = Endpoint::Tracks(track_id);
-    Ok(self.get_endpoint_response(endpoint)?.json()?)
-  }
+  #[get(format!("/tracks/{track_id}"))]
+  fn get_track(&self, track_id: &u64) -> Result<Track> {}
 
-  fn get_track_credits(&self, track_id: &u64, limit: &u64, include_contributors: bool) -> Result<Vec<MediaCredit>> {
-    let endpoint = Endpoint::TracksCredits(track_id);
-    let query = &[
-      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-      ("limit", &limit.to_string()),
-      ("includeContributors", &include_contributors.to_string()),
-    ];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
-  }
+  #[get(format!("/tracks/{track_id}/credits"))]
+  #[query(&[
+    ("limit", &limit.to_string()), 
+    ("includeContributors", &include_contributors.to_string())
+  ])]
+  fn get_track_credits(&self, track_id: &u64, limit: &u64, include_contributors: bool) -> Result<Vec<MediaCredit>> {}
 
-  fn get_track_mix_id(&self, track_id: &u64) -> Result<MixId> {
-    let endpoint = Endpoint::TracksMix(track_id);
-    Ok(self.get_endpoint_response(endpoint)?.json()?)
-  }
+  #[get(format!("/tracks/{track_id}/mix"))]
+  fn get_track_mix_id(&self, track_id: &u64) -> Result<MixId> {}
 
-  fn get_track_lyrics(&self, track_id: &u64) -> Result<Lyrics> {
-    let endpoint = Endpoint::TracksLyrics(track_id);
-    Ok(self.get_endpoint_response(endpoint)?.json()?)
-  }
+  #[get(format!("/tracks/{track_id}/lyrics"))]
+  fn get_track_lyrics(&self, track_id: &u64) -> Result<Lyrics> {}
 
-  fn get_track_recommendations(&self, track_id: &u64, limit: &u64) -> Result<Paging<MediaRecommendation>> {
-    let endpoint = Endpoint::TracksRecommendations(track_id);
-    let query: &[(&str, &str)] = &[
-      ("limit", &limit.to_string()),
-      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-    ];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
-  }
+  #[get(format!("/tracks/{track_id}/recommendations"))]
+  #[query(&[("limit", &limit.to_string())])]
+  fn get_track_recommendations(&self, track_id: &u64, limit: &u64) -> Result<Paging<MediaRecommendation>> {}
 
-  fn playback_info_for_track(&self, track_id: &u64, options: &PlaybackInfoOptions) -> Result<PlaybackInfo> {
-    let endpoint = Endpoint::TracksPlaybackinfo(track_id);
-    let query = &options.get_query_params();
-    let headers = &[
-      ("x-tidal-token", self.client_credentials.id()),
-      ("x-tidal-prefetch", &options.prefetch.to_string()),
-      ("x-tidal-streamingsessionid", &self.streaming_session_id.to_string()),
-    ];
-    let res = self.get_helper(endpoint, Some(query), None, Some(headers))?;
-    Ok(res.json()?)
-  }
+  #[get(format!("/tracks/{track_id}/playbackinfo"))]
+  #[query(&options.get_query_params())]
+  #[headers([
+    ("x-tidal-token", self.client_credentials.id()),
+    ("x-tidal-prefetch", &options.prefetch.to_string()),
+    ("x-tidal-streamingsessionid", &self.streaming_session_id.to_string()),
+  ])]
+  fn playback_info_for_track(&self, track_id: &u64, options: &PlaybackInfoOptions) -> Result<PlaybackInfo> {}
 }
+#[client(self.http_client)]
+#[base_url("https://api.tidal.com/v1")]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[shared_query(&self.shared_query())]
 impl VideoCatalogue for Client {
-  fn get_video(&self, video_id: &u64) -> Result<crate::api::Video> {
-    let endpoint = Endpoint::Videos(video_id);
-    Ok(self.get_endpoint_response(endpoint)?.json()?)
-  }
+  #[get(format!("/videos/{video_id}"))]
+  fn get_video(&self, video_id: &u64) -> Result<crate::api::Video> {}
 
-  fn get_video_recommendations(&self, video_id: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaRecommendation>> {
-    let endpoint = Endpoint::VideosRecommendations(video_id);
-    let query: &[(&str, &str)] = &[
-      ("limit", &limit.to_string()),
-      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-    ];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
-  }
+  #[get(format!("/videos/{video_id}/recommendations"))]
+  #[query(&[("limit", &limit.to_string())])]
+  fn get_video_recommendations(&self, video_id: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaRecommendation>> {}
 
-  fn playback_info_for_video(&self, video_id: &u64, options: &crate::api::PlaybackInfoOptions) -> Result<crate::api::PlaybackInfo> {
-    let endpoint = Endpoint::VideosPlaybackinfo(video_id);
-    let query = &options.get_query_params();
-    let headers = &[
-      ("x-tidal-token", self.client_credentials.id()),
-      ("x-tidal-prefetch", &options.prefetch.to_string()),
-      ("x-tidal-streamingsessionid", &self.streaming_session_id.to_string()),
-    ];
-    let res = self.get_helper(endpoint, Some(query), None, Some(headers))?;
-    Ok(res.json()?)
-  }
+  #[get(format!("/videos/{video_id}/playbackinfo"))]
+  #[query(&options.get_query_params())]
+  fn playback_info_for_video(&self, video_id: &u64, options: &crate::api::PlaybackInfoOptions) -> Result<crate::api::PlaybackInfo> {}
 }
+#[client(self.http_client)]
+#[base_url("https://api.tidal.com/v1")]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[shared_query(&self.shared_query())]
 impl ArtistCatalogue for Client {
-  fn get_artist(&self, artist_id: &u64) -> Result<crate::api::Artist> {
-    let endpoint = Endpoint::Artists(artist_id);
-    Ok(self.get_endpoint_response(endpoint)?.json()?)
-  }
+  #[get(format!("/artists/{artist_id}"))]
+  fn get_artist(&self, artist_id: &u64) -> Result<crate::api::Artist> {}
 
-  fn get_artist_bio(&self, artist_id: &u64) -> Result<crate::api::ArtistBio> {
-    let endpoint = Endpoint::ArtistsBio(artist_id);
-    Ok(self.get_endpoint_response(endpoint)?.json()?)
-  }
+  #[get(format!("/artists/{artist_id}/bio"))]
+  fn get_artist_bio(&self, artist_id: &u64) -> Result<crate::api::ArtistBio> {}
 
-  fn get_artist_mix_id(&self, artist_id: &u64) -> Result<crate::api::MixId> {
-    let endpoint = Endpoint::ArtistsMix(artist_id);
-    Ok(self.get_endpoint_response(endpoint)?.json()?)
-  }
+  #[get(format!("/artists/{artist_id}/mix"))]
+  fn get_artist_mix_id(&self, artist_id: &u64) -> Result<crate::api::MixId> {}
 
-  fn get_artist_top_tracks(&self, artist_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::Track>> {
-    let endpoint = Endpoint::ArtistsTopTracks(artist_id);
-    let query: &[(&str, &str)] = &[
-      ("offset", &offset.to_string()),
-      ("limit", &limit.to_string()),
-      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-    ];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
-  }
+  #[get(format!("/artists/{artist_id}/toptracks"))]
+  #[query(&[
+    ("offset", &offset.to_string()),
+    ("limit", &limit.to_string()), 
+  ])]
+  fn get_artist_top_tracks(&self, artist_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::Track>> {}
 
-  fn get_artist_videos(&self, artist_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::Video>> {
-    let endpoint = Endpoint::ArtistsVideos(artist_id);
-    let query: &[(&str, &str)] = &[
-      ("offset", &offset.to_string()),
-      ("limit", &limit.to_string()),
-      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-    ];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
-  }
+  #[get(format!("/artists/{artist_id}/videos"))]
+  #[query(&[
+    ("offset", &offset.to_string()),
+    ("limit", &limit.to_string()), 
+  ])]
+  fn get_artist_videos(&self, artist_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::Video>> {}
 
-  fn get_artist_albums(&self, artist_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::Album>> {
-    let endpoint = Endpoint::ArtistsAlbums(artist_id);
-    let query: &[(&str, &str)] = &[
-      ("offset", &offset.to_string()),
-      ("limit", &limit.to_string()),
-      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-    ];
-    let res = self.get_helper(endpoint, Some(query), None, None)?;
-    Ok(res.json()?)
-  }
+  #[get(format!("/artists/{artist_id}/albums"))]
+  #[query(&[
+    ("offset", &offset.to_string()),
+    ("limit", &limit.to_string()), 
+  ])]
+  fn get_artist_albums(&self, artist_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::Album>> {}
 }
+#[client(self.http_client)]
+#[base_url("https://api.tidal.com/v1")]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[shared_query(&self.shared_query())]
 impl AlbumCatalogue for Client {
-  fn get_album(&self, album_id: &u64) -> Result<crate::api::Album> {
-    let endpoint = Endpoint::Albums(album_id);
-    Ok(self.get_endpoint_response(endpoint)?.json()?)
-  }
+  #[get(format!("/albums/{album_id}"))]
+  fn get_album(&self, album_id: &u64) -> Result<crate::api::Album> {}
 
-  fn get_album_credits(&self, album_id: &u64, include_contributors: bool) -> Result<Vec<crate::api::MediaCredit>> {
-    let endpoint = Endpoint::AlbumsCredits(album_id);
-    let query: &[(&str, &str)] = &[
-      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-      ("includeContributors", &include_contributors.to_string()),
-    ];
-    Ok(self.get_helper(endpoint, Some(query), None, None)?.json()?)
-  }
+  #[get(format!("/albums/{album_id}/credits"))]
+  #[query(&[("includeContributors", &include_contributors.to_string())])]
+  fn get_album_credits(&self, album_id: &u64, include_contributors: bool) -> Result<Vec<crate::api::MediaCredit>> {}
 
-  fn get_album_items(&self, album_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaItem>> {
-    let endpint = Endpoint::AlbumsItems(album_id);
-    let query: &[(&str, &str)] = &[
-      ("offset", &offset.to_string()),
-      ("limit", &limit.to_string()),
-      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-    ];
-    Ok(self.get_helper(endpint, Some(query), None, None)?.json()?)
-  }
+  #[get(format!("/albums/{album_id}/items"))]
+  #[query(&[
+    ("offset", &offset.to_string()),
+    ("limit", &limit.to_string()), 
+  ])]
+  fn get_album_items(&self, album_id: &u64, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaItem>> {}
 
+  #[get(format!("/albums/{album_id}/items/credits"))]
+  #[query(&[
+    ("offset", &offset.to_string()),
+    ("limit", &limit.to_string()), 
+    ("includeContributors", &include_contributors.to_string())
+  ])]
   fn get_album_items_with_credits(
     &self,
     album_id: &u64,
@@ -524,46 +445,35 @@ impl AlbumCatalogue for Client {
     limit: &u64,
     include_contributors: bool,
   ) -> Result<crate::api::Paging<crate::api::MediaItem>> {
-    let endpint = Endpoint::AlbumsItems(album_id);
-    let query: &[(&str, &str)] = &[
-      ("offset", &offset.to_string()),
-      ("limit", &limit.to_string()),
-      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-      ("includeContributors", &include_contributors.to_string()),
-    ];
-    Ok(self.get_helper(endpint, Some(query), None, None)?.json()?)
   }
 }
+#[client(self.http_client)]
+#[base_url("https://api.tidal.com/v1")]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[shared_query(&self.shared_query())]
 impl PlaylistCatalogue for Client {
-  fn get_playlist(&self, playlist_id: &Uuid) -> Result<crate::api::Playlist> {
-    let endpoint = Endpoint::Playlists(playlist_id);
-    let response = self.get_endpoint_response(endpoint)?;
-    let etag = response.headers().get("ETag").map(|v| v.to_str().unwrap().to_string());
-    let mut playlist: crate::api::Playlist = response.json()?;
+  #[get(format!("/playlists/{playlist_id}"))]
+  #[response_handler(|res: Response| -> Result<crate::api::Playlist> {
+    let etag = res.headers().get("ETag").map(|v| v.to_str().unwrap().to_string());
+    let mut playlist: crate::api::Playlist = res.json()?;
     playlist.etag = etag;
     Ok(playlist)
-  }
+  })]
+  fn get_playlist(&self, playlist_id: &Uuid) -> Result<crate::api::Playlist> {}
 
-  fn get_playlist_items(&self, playlist_id: &Uuid, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaItem>> {
-    let endpoint = Endpoint::PlaylistsItems(playlist_id);
-    let query: &[(&str, &str)] = &[
-      ("offset", &offset.to_string()),
-      ("limit", &limit.to_string()),
-      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-      ("locale", "en_US"),
-    ];
-    Ok(self.get_helper(endpoint, Some(query), None, None)?.json()?)
-  }
+  #[get(format!("/playlists/{playlist_id}/items"))]
+  #[query(&[
+    ("offset", &offset.to_string()),
+    ("limit", &limit.to_string()), 
+  ])]
+  fn get_playlist_items(&self, playlist_id: &Uuid, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaItem>> {}
 
-  fn get_playlist_recommendations(&self, playlist_id: &Uuid, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaItem>> {
-    let endpoint = Endpoint::PlaylistsRecommendations(playlist_id);
-    let query: &[(&str, &str)] = &[
-      ("offset", &offset.to_string()),
-      ("limit", &limit.to_string()),
-      ("countryCode", self.country.unwrap_or(CountryCode::USA).alpha2()),
-    ];
-    Ok(self.get_helper(endpoint, Some(query), None, None)?.json()?)
-  }
+  #[get(format!("/playlists/{playlist_id}/recommendations/items"))]
+  #[query(&[
+    ("offset", &offset.to_string()),
+    ("limit", &limit.to_string()), 
+  ])]
+  fn get_playlist_recommendations(&self, playlist_id: &Uuid, offset: &u64, limit: &u64) -> Result<crate::api::Paging<crate::api::MediaItem>> {}
 }
 
 /// A simple struct for storing client credentials, with a custom Debug impl that redacts the client secret.
