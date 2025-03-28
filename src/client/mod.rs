@@ -254,18 +254,18 @@ impl UserFlow for Client {
   fn user_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {}
 }
 #[client(self.http_client)]
-#[base_url("https://auth.tidal.com/v1/")]
+#[base_url("https://auth.tidal.com/v1")]
 #[basic_auth(self.basic_auth())]
 #[shared_query(&self.shared_query())]
 impl DeviceFlow for Client {
-  #[post("oauth2/device_authorization")]
+  #[post("/oauth2/device_authorization")]
   #[query(&[
     ("scope", "r_usr+w_usr+w_sub"), 
     ("client_id", self.get_client_id())
   ])]
   fn device_login_init(&self) -> Result<crate::interface::auth::flows::DeviceFlowResponse> {}
 
-  #[get("oauth2/token")]
+  #[get("/oauth2/token")]
   #[query(&[
     ("scope", "r_usr+w_usr+w_sub"),
     ("client_id", self.client_credentials.id()),
