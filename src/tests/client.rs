@@ -235,3 +235,51 @@ mod playlists {
     client.get_playlist_recommendations(&EXAMPLE_UNOWNED_PLAYLIST_ID, &0, &10).unwrap();
   }
 }
+
+mod my_collection {
+  mod playlists {
+    use super::super::EXAMPLE_UNOWNED_PLAYLIST_ID;
+    use crate::api::my_collection::{FolderData, ResourceInfo};
+    use crate::api::Playlist;
+    use crate::interface::{catalogue::playlist::PlaylistCollection, RefreshFlow};
+    use crate::utils::client_from_authfile;
+
+    #[test]
+    fn add_remove_playlist_at_root() {
+      let mut client = client_from_authfile().unwrap();
+      client.refresh().unwrap();
+      let res = client.add_favorite_playlist(None, &EXAMPLE_UNOWNED_PLAYLIST_ID).unwrap();
+      println!("add result: {}", res.text().unwrap());
+      let res = client.remove_playlist(&EXAMPLE_UNOWNED_PLAYLIST_ID).unwrap();
+      println!("remove result: {}", res.text().unwrap());
+    }
+
+    #[test]
+    fn create_remove_folder_at_root() {
+      let mut client = client_from_authfile().unwrap();
+      client.refresh().unwrap();
+      let res = client.create_folder(None, "Create Remove Folder Test", None).unwrap();
+      let resource: ResourceInfo<FolderData> = res.json().unwrap();
+      println!("create result: {:#?}", resource);
+      let res = client.remove_folder(&resource.data.id).unwrap();
+      println!("remove result: {}", res.text().unwrap());
+    }
+
+    #[test]
+    fn publish_playlist() {
+      let mut client = client_from_authfile().unwrap();
+      client.refresh().unwrap();
+      let res = client
+        .create_playlist(None, "Create publish playlist test", "test description", false)
+        .unwrap();
+      let resource: ResourceInfo<Playlist> = res.json().unwrap();
+      println!("create result: {:#?}", resource);
+      let res = client.publish_playlist(&resource.data.uuid).unwrap();
+      println!("publish result: {}", res.text().unwrap());
+      let res = client.unpublish_playlist(&resource.data.uuid).unwrap();
+      println!("unpublish result: {}", res.text().unwrap());
+      let res = client.remove_playlist(&resource.data.uuid).unwrap();
+      println!("remove result: {}", res.text().unwrap());
+    }
+  }
+}
