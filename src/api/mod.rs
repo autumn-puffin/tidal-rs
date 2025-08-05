@@ -5,6 +5,7 @@
 
 pub mod enums;
 pub mod media;
+pub mod my_collection;
 pub mod pages;
 pub mod paging;
 pub mod playback;
