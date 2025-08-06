@@ -12,8 +12,8 @@ pub use crate::interface::{
 };
 use crate::{
   api::{
-    Lyrics, MediaCredit, MediaRecommendation, MixId, Page, Paging, PlaybackInfo, PlaybackInfoOptions, Session, Track, User, UserClient,
-    UserSubscription,
+    Lyrics, MediaCredit, MediaItem, MediaRecommendation, Mix, MixId, Page, Paging, PlaybackInfo, PlaybackInfoOptions, Session, Track, User,
+    UserClient, UserSubscription,
   },
   utils, Result,
 };
@@ -168,6 +168,17 @@ impl Client {
     [("countryCode", cc), ("locale", "en_US"), ("deviceType", "BROWSER")]
   }
 }
+
+#[client(self.http_client)]
+#[base_url("https://api.tidal.com/v1")]
+#[bearer_auth(self.bearer_auth().unwrap_or_default())]
+#[shared_query(&self.shared_query())]
+impl Client {
+  #[get(format!("/mixes/{mix_id}/items"))]
+  #[query(&[("offset", offset.to_string()), ("limit", limit.to_string())])]
+  pub fn get_mix_items(&self, mix_id: &str, offset: &u64, limit: &u64) -> Result<Paging<MediaItem>> {}
+}
+
 impl Auth for Client {
   type Credentials = AuthCreds;
   fn get_credentials(&self) -> Result<&AuthCreds> {

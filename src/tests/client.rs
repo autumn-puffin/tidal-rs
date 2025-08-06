@@ -283,3 +283,15 @@ mod my_collection {
     }
   }
 }
+
+mod mixes {
+  use super::EXAMPLE_MIX_ID;
+  use crate::interface::RefreshFlow;
+
+  #[test]
+  fn get_mix_items() {
+    let mut client = super::client_from_authfile().unwrap();
+    client.refresh().unwrap();
+    client.get_mix_items(EXAMPLE_MIX_ID, &0, &100).unwrap();
+  }
+}
