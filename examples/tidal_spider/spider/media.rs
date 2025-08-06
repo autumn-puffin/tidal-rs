@@ -60,11 +60,10 @@ impl Crawl for Track {
     targets.extend(self.artists.identify_targets()?);
     targets.extend(self.album.identify_targets()?);
     if let Some(mixes) = self.mixes.clone() {
-      for mix in [mixes.artist_mix, mixes.master_artist_mix].iter().flatten() {
+      for mix in [mixes.track_mix, mixes.master_track_mix].iter().flatten() {
         targets.insert(Target::Mix(mix.clone()));
       }
     }
-
     Ok(targets)
   }
 }
