@@ -35,7 +35,7 @@ impl RequestFunction {
     if let Some(headers) = &self.request.headers {
       init = quote::quote! {
         #init
-        let headers = HashMap::from_iter(#headers.iter().map(|(k, v)| (k.to_string(), v.to_string())));
+        let headers: HashMap<String, String> = HashMap::from_iter(#headers.iter().map(|(k, v)| (k.to_string(), v.to_string())));
         let headers = HeaderMap::try_from(&headers).unwrap();
       };
       call = quote::quote! {
