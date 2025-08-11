@@ -100,7 +100,7 @@ impl Client {
   }
   /// return true if the client is authrnticated and has a refresh token
   pub fn can_refresh(&self) -> bool {
-    self.auth_credentials.as_ref().map_or(false, |creds| creds.refresh_token().is_some())
+    self.auth_credentials.as_ref().map_or(false, |creds| creds.refresh_token().is_ok())
   }
   /// run a closure that may need to refresh the auth token
   ///

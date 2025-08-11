@@ -60,8 +60,8 @@ impl AuthCreds {
   pub fn access_token(&self) -> &str {
     &self.access_token
   }
-  pub fn refresh_token(&self) -> Option<&str> {
-    self.refresh_token.as_deref()
+  pub fn refresh_token(&self) -> Result<&str> {
+    self.refresh_token.as_deref().ok_or(AuthError::MissingRefreshToken.into())
   }
   pub fn user_id(&self) -> Option<&u64> {
     self.user_id.as_ref()
@@ -95,7 +95,7 @@ impl AuthCreds {
     let endpoint = Endpoint::OAuth2Token;
     let grant = GrantType::RefreshToken;
     let client_credentials = self.client_credentials();
-    let refresh_token = self.refresh_token().ok_or(AuthError::MissingRefreshToken)?;
+    let refresh_token = self.refresh_token()?;
 
     let params = &[("refresh_token", refresh_token)];
 
