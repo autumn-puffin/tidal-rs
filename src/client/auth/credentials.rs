@@ -4,14 +4,7 @@ use reqwest::blocking::Client as ReqwestClient;
 use serde::{Deserialize, Serialize};
 
 use super::{AuthUser, TokenResponse};
-use crate::{
-  client::ClientCreds,
-  endpoints::Endpoint,
-  error::ApiErrorResponse,
-  interface::auth::{flows::*, *},
-  utils::oauth_request_helper,
-  Result,
-};
+use crate::{client::ClientCreds, endpoints::Endpoint, error::ApiErrorResponse, interface::auth::*, utils::oauth_request_helper, Result};
 use std::{fmt::Debug, ops::Deref};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -89,46 +82,23 @@ impl AuthCreds {
     Ok(())
   }
   pub fn refresh_with_http_client(&mut self, client: &ReqwestClient) -> Result<()> {
-    match self.grant_type() {
-      GrantType::ClientCredentials => self.client_login(),
-      _ => {
-        let endpoint = Endpoint::OAuth2Token;
-        let grant = GrantType::RefreshToken;
-        let client_credentials = self.client_credentials();
-        let refresh_token = self.refresh_token().unwrap();
-
-        let params = &[("refresh_token", refresh_token)];
-
-        let res = oauth_request_helper(client, endpoint, grant, client_credentials, Some(params)).send()?;
-        if res.status().is_success() {
-          *self = AuthCreds::new(GrantType::RefreshToken, client_credentials.clone(), res.json::<TokenResponse>()?);
-        } else {
-          return Err(res.json::<ApiErrorResponse>()?.into());
-        }
-        Ok(())
-      }
+    if self.grant_type == GrantType::ClientCredentials {
+      return self.client_login_with_http_client(client);
     }
-  }
-}
-impl Credentials for AuthCreds {
-  fn expires_at(&self) -> i64 {
-    AuthCreds::expires_at(self)
-  }
-  fn country_code(&self) -> Option<&CountryCode> {
-    AuthCreds::country_code(self)
-  }
-  fn user_id(&self) -> Option<&u64> {
-    AuthCreds::user_id(self)
-  }
-}
-impl ClientFlow for AuthCreds {
-  fn client_login(&mut self) -> Result<()> {
-    self.client_login_with_http_client(&ReqwestClient::new())
-  }
-}
-impl RefreshFlow for AuthCreds {
-  fn refresh(&mut self) -> Result<()> {
-    self.refresh_with_http_client(&ReqwestClient::new())
+    let endpoint = Endpoint::OAuth2Token;
+    let grant = GrantType::RefreshToken;
+    let client_credentials = self.client_credentials();
+    let refresh_token = self.refresh_token().ok_or(AuthError::MissingRefreshToken)?;
+
+    let params = &[("refresh_token", refresh_token)];
+
+    let res = oauth_request_helper(client, endpoint, grant, client_credentials, Some(params)).send()?;
+    if res.status().is_success() {
+      *self = AuthCreds::new(GrantType::RefreshToken, client_credentials.clone(), res.json::<TokenResponse>()?);
+    } else {
+      return Err(res.json::<ApiErrorResponse>()?.into());
+    }
+    Ok(())
   }
 }
 
