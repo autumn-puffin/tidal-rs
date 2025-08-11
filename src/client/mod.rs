@@ -389,7 +389,7 @@ impl Client {
     ("folderId", parent_folder_id.map_or("root".to_owned(), |uuid| {uuid.to_string()})),
     ("uuids", playlist_id.to_string())
   ])]
-  fn add_favorite_playlist(&self, parent_folder_id: Option<&Uuid>, playlist_id: &Uuid) -> Result<Response> {}
+  pub fn add_favorite_playlist(&self, parent_folder_id: Option<&Uuid>, playlist_id: &Uuid) -> Result<Response> {}
 
   #[put("/my-collection/playlists/folders/create-playlist")]
   #[query(&[
@@ -398,18 +398,18 @@ impl Client {
     ("folderId", &parent_folder_id.map_or("root".to_owned(), |uuid| {uuid.to_string()})),
     ("isPublic", &is_public.to_string())
   ])]
-  fn create_playlist(&self, parent_folder_id: Option<&Uuid>, name: &str, description: &str, is_public: bool) -> Result<Response> {}
+  pub fn create_playlist(&self, parent_folder_id: Option<&Uuid>, name: &str, description: &str, is_public: bool) -> Result<Response> {}
 
   #[put("/my-collection/playlists/folders/remove")]
   #[query(&[("trns", format!("trn:playlist:{playlist_id}"))])]
-  fn remove_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
+  pub fn remove_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
 
   #[put("/my-collection/playlists/folders/move")]
   #[query(&[
     ("folderId", parent_folder_id.map_or("root".to_owned(), |uuid| {uuid.to_string()})),
     ("trns", format!("trn:playlist:{playlist_id}"))
   ])]
-  fn move_playlist(&self, parent_folder_id: Option<&Uuid>, playlist_id: &Uuid) -> Result<Response> {}
+  pub fn move_playlist(&self, parent_folder_id: Option<&Uuid>, playlist_id: &Uuid) -> Result<Response> {}
 
   #[put("/my-collection/playlists/folders/rename")]
   #[query(&[
@@ -417,17 +417,17 @@ impl Client {
     ("description", description),
     ("trn", &format!("trn:playlist:{playlist_id}")),
   ])]
-  fn edit_playlist(&self, playlist_id: &Uuid, name: &str, description: &str) -> Result<Response> {}
+  pub fn edit_playlist(&self, playlist_id: &Uuid, name: &str, description: &str) -> Result<Response> {}
 
   #[put(format!("/playlists/{playlist_id}/set-public"))]
-  fn publish_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
+  pub fn publish_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
 
   #[put(format!("/playlists/{playlist_id}/set-private"))]
-  fn unpublish_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
+  pub fn unpublish_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
 
   #[put("/my-collection/playlists/folders/items")]
   #[query(&[("trns", format!("trn:playlist:{playlist_id}"))])]
-  fn get_collection_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
+  pub fn get_collection_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
 
   #[put("/my-collection/playlists/folders/create-folder")]
   #[query(&[
@@ -435,29 +435,29 @@ impl Client {
     ("folderId", &parent_folder_id.map_or("root".to_owned(), |uuid| {uuid.to_string()})),
     ("trns", _trns.unwrap_or_default())
   ])]
-  fn create_folder(&self, parent_folder_id: Option<&Uuid>, name: &str, _trns: Option<&str>) -> Result<Response> {}
+  pub fn create_folder(&self, parent_folder_id: Option<&Uuid>, name: &str, _trns: Option<&str>) -> Result<Response> {}
 
   #[put("/my-collection/playlists/folders/remove")]
   #[query(&[("trns", format!("trn:folder:{folder_id}"))])]
-  fn remove_folder(&self, folder_id: &Uuid) -> Result<Response> {}
+  pub fn remove_folder(&self, folder_id: &Uuid) -> Result<Response> {}
 
   #[get("/my-collection/playlists/folders")]
   #[query(&[("folderId", folder_id.map_or("root".to_owned(), |uuid| {uuid.to_string()}))])]
-  fn get_folder_items(&self, folder_id: Option<&Uuid>) -> Result<Response> {}
+  pub fn get_folder_items(&self, folder_id: Option<&Uuid>) -> Result<Response> {}
 
   #[put("/my-collection/playlists/folders/move")]
   #[query(&[
     ("folderId", parent_folder_id.map_or("root".to_owned(), |uuid| {uuid.to_string()})),
     ("trns", format!("trn:folder:{folder_id}"))
   ])]
-  fn move_folder(&self, parent_folder_id: Option<&Uuid>, folder_id: &Uuid) -> Result<Response> {}
+  pub fn move_folder(&self, parent_folder_id: Option<&Uuid>, folder_id: &Uuid) -> Result<Response> {}
 
   #[put("/my-collection/playlists/folders/rename")]
   #[query(&[
     ("name", name),
     ("trn", &format!("trn:folder:{folder_id}")),
   ])]
-  fn rename_folder(&self, folder_id: &Uuid, name: &str) -> Result<Response> {}
+  pub fn rename_folder(&self, folder_id: &Uuid, name: &str) -> Result<Response> {}
 }
 
 ///
