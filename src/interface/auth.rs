@@ -66,7 +66,7 @@ pub trait Credentials: RefreshFlow {
 }
 
 /// The type of grant being used for authentication
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum GrantType {
   ClientCredentials,
   AuthorizationCode,
@@ -90,4 +90,5 @@ pub enum AuthError {
   MissingRedirectUri,
   MaxRetriesReached,
   Unauthenticated,
+  MissingRefreshToken,
 }

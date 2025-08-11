@@ -26,13 +26,8 @@ use tidal_rs_macros::{
 use url::Url;
 use uuid::Uuid;
 
-/// Standalone auth client implimentation
 pub mod auth;
-use auth::{AuthClient, AuthCreds, TokenResponse};
-
-/// Standalone catalogue client implimentation
-pub mod catalogue;
-use catalogue::CatalogueClient;
+use auth::{AuthCreds, TokenResponse};
 
 /// A client for interacting with the Tidal API, implimenting all of the available interfaces.
 pub struct Client {
@@ -59,14 +54,6 @@ impl Client {
       country: None,
       streaming_session_id,
     }
-  }
-  /// Create an `AuthClient` from the `Client`
-  pub fn as_auth(&self) -> AuthClient {
-    AuthClient::new(self.client_credentials.clone())
-  }
-  /// Create a `CatalogueClient` from the `Client`
-  pub fn as_catalogue(&self) -> CatalogueClient {
-    CatalogueClient::new(self.client_credentials.clone())
   }
   /// Set the redirect uri for code flow auth
   pub fn set_redirect_uri(&mut self, uri: String) {
