@@ -2,7 +2,7 @@ use spider::{Crawl as _, Target};
 use std::{collections::HashSet, path::Path};
 use tidal_rs::{
   api::Page,
-  client::{auth::AuthCreds, Client},
+  client::{AuthCreds, Client},
 };
 
 mod error;

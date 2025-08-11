@@ -1,9 +1,6 @@
 use crate::{
-  api::GrantType,
-  client::{
-    auth::{AuthCreds, TokenResponse},
-    ClientCreds,
-  },
+  api::{GrantType, TokenResponse},
+  client::{AuthCreds, ClientCreds},
   endpoints::Endpoint,
   Result,
 };
