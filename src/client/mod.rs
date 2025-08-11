@@ -463,12 +463,37 @@ impl Client {
 ///
 /// Methods for auth
 ///
+/// # Client Flow
+///
+/// Client flow uses only the client credentials to authenticate, offering only basic access
+///
+/// # User Flow
+///
+/// User flow works in two stages, first `user_flow_login_init()` is called, which should return a
+/// properly structured URL and a PKCE verifier. The user should then visit the URL and authorize
+/// the application. Once the user has authorized the application, they will be redirected to a
+/// specified redirect URI with a code as a query parameter. This code, along with the PKCE
+/// verifier should be passed to `user_flow_login_finalize()`, which will complete the login process.
+///
+/// # Device Flow
+///
+/// Device flow is similar to user flow, but is designed for devices with limited input
+/// capabilities. The device flow is initiated with `device_flow_login_init()`, which should return a
+/// user code and a verification URI to be displayed to the user, as well as a device code, expiry
+/// time, and polling interval, which will be used when finalizing authentication. The user should
+/// visit the verification URI, enter the user code, and authenticate the application. Once the
+/// user has authenticated the application, `try_device_flow_login_finalize()` can be called to complete
+/// the login process. Since device flow does not require direct user input, it is possible, and
+/// recomended to call `device_flow_login_finalize()` instead, which will automatically poll the server
+/// until either the user has authenticated the application, or the flow has expired.
+
 #[client(self.http_client)]
 #[base_url("https://auth.tidal.com/v1")]
 #[basic_auth(self.basic_auth())]
 #[shared_query(&self.shared_query())]
 impl Client {
   // Client Flow //
+  /// Authenticate using only the client credentials
   #[post("/oauth2/token")]
   #[body_form_url_encoded]
   #[body(&[("grant_type", "client_credentials")])]
@@ -489,6 +514,8 @@ impl Client {
   pub fn client_flow_login(&mut self) -> Result<()> {}
 
   // User Flow //
+  /// Returns a `UserFlowInfo` containing a URL for the user to authorize the application, and a
+  /// PKCE verifier to be used in conjunction with the code returned from the redirect URI.
   pub fn user_flow_login_init(&self) -> Result<UserFlowInfo> {
     let redirect_uri = self.redirect_uri.as_ref().ok_or(AuthError::Unauthenticated)?;
     let scopes = self.scopes.join(" ");
@@ -509,6 +536,8 @@ impl Client {
 
     Ok(UserFlowInfo::new(auth_url, pkce_verifier))
   }
+  /// Consumes both the `UserFlowInfo` from `user_flow_login_init()` and the code returned from the
+  /// redirect URI to finalize the user flow login.
   #[post("/oauth2/token")]
   #[body_form_url_encoded]
   #[body(&[
@@ -532,6 +561,8 @@ impl Client {
   pub fn user_flow_login_finalize(&mut self, code: String, info: UserFlowInfo) -> Result<()> {}
 
   // Device Flow //
+  /// Initializes the device flow login process, returning a `DeviceFlowResponse` containing the user code,
+  /// verification URI, device code, expiry time, and polling interval.
   #[post("/oauth2/device_authorization")]
   #[body_form_url_encoded]
   #[body(&[
@@ -546,6 +577,7 @@ impl Client {
     Ok(response)
   })]
   pub fn device_flow_login_init(&self) -> Result<DeviceFlowResponse> {}
+  /// Attempts to finalize the device flow login process, consuming the `DeviceFlowResponse` from `device_flow_login_init()`.
   #[post("/oauth2/token")]
   #[body_form_url_encoded]
   #[body(&[
@@ -566,6 +598,8 @@ impl Client {
     Ok(())
   })]
   pub fn try_device_flow_login_finalize(&mut self, response: &DeviceFlowResponse) -> Result<()> {}
+  /// Attempts to finalize the device flow login process, retrying until either the user has authenticated,
+  /// the flow has expired, or the maximum number of retries has been reached.
   pub fn device_flow_login_finalize(&mut self, response: &DeviceFlowResponse) -> Result<()> {
     let interval = response.interval;
     let max_retries = response.expires_in / interval;
@@ -584,6 +618,7 @@ impl Client {
   }
 
   // Refresh Flow //
+  /// Refreshes the current credentials
   pub fn refresh(&mut self) -> Result<()> {
     self
       .auth_credentials
