@@ -1,6 +1,7 @@
 use super::{auth::AuthCreds, ClientCreds};
 use isocountry::CountryCode;
 
+#[deprecated]
 pub struct CatalogueClient {
   client_credentials: ClientCreds,
   auth_credentials: Option<AuthCreds>,

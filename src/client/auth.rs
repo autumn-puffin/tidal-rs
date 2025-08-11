@@ -71,6 +71,7 @@ pub struct AuthUser {
   pub new_user: bool,
 }
 
+#[deprecated]
 pub struct AuthClient {
   client_credentials: ClientCreds,
   /// Authorisation Configuration
