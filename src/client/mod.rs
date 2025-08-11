@@ -494,7 +494,7 @@ impl Client {
   /// Authenticate using only the client credentials
   #[post("/oauth2/token")]
   #[body_form_url_encoded]
-  #[body(&[("grant_type", "client_credentials")])]
+  #[body(&[("grant_type", GrantType::ClientCredentials.as_str())])]
   #[response_handler(|res: Response| {
       if !res.status().is_success() {
         println!("Error: {}", res.status());
