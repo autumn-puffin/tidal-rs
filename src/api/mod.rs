@@ -3,6 +3,7 @@
 //! This module contains the models for data returned from the Tidal API, including catalogue media,
 //! page data, various enums, and other data structures.
 
+pub mod auth;
 pub mod enums;
 pub mod media;
 pub mod my_collection;
@@ -10,6 +11,7 @@ pub mod pages;
 pub mod paging;
 pub mod playback;
 pub mod user;
+pub use auth::*;
 pub use enums::*;
 pub use media::*;
 pub use pages::*;

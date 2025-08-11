@@ -7,11 +7,10 @@ use std::collections::HashMap;
 
 use crate::{
   api::{
-    Lyrics, MediaCredit, MediaItem, MediaRecommendation, Mix, MixId, Page, Paging, PlaybackInfo, PlaybackInfoOptions, Session, Track, User,
-    UserClient, UserSubscription,
+    DeviceFlowResponse, GrantType, Lyrics, MediaCredit, MediaItem, MediaRecommendation, Mix, MixId, Page, Paging, PlaybackInfo, PlaybackInfoOptions,
+    Session, Track, User, UserClient, UserFlowInfo, UserSubscription,
   },
   error::{AuthError, UsersError},
-  interface::auth::{DeviceFlowResponse, GrantType, UserFlowInfo},
   utils, Result,
 };
 use isocountry::CountryCode;

@@ -5,10 +5,10 @@ use serde::{Deserialize, Serialize};
 
 use super::{AuthUser, TokenResponse};
 use crate::{
+  api::GrantType,
   client::ClientCreds,
   endpoints::Endpoint,
   error::{ApiErrorResponse, AuthError},
-  interface::auth::*,
   utils::oauth_request_helper,
   Result,
 };
