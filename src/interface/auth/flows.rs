@@ -48,14 +48,14 @@ pub trait DeviceFlow {
     let mut i: i64 = 0;
     while i < max_retries {
       match self.try_device_login_finalize(response) {
-        Err(Error::AuthError(super::AuthError::AuthorizationPending)) => {
+        Err(Error::AuthError(crate::error::AuthError::AuthorizationPending)) => {
           i += 1;
           std::thread::sleep(std::time::Duration::from_secs(interval as u64));
         }
         res => return res,
       }
     }
-    Err(super::AuthError::MaxRetriesReached)?
+    Err(crate::error::AuthError::MaxRetriesReached)?
   }
 }
 

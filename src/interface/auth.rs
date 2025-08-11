@@ -83,12 +83,3 @@ impl GrantType {
     }
   }
 }
-
-#[derive(Debug)]
-pub enum AuthError {
-  AuthorizationPending,
-  MissingRedirectUri,
-  MaxRetriesReached,
-  Unauthenticated,
-  MissingRefreshToken,
-}

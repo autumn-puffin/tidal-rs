@@ -4,7 +4,14 @@ use reqwest::blocking::Client as ReqwestClient;
 use serde::{Deserialize, Serialize};
 
 use super::{AuthUser, TokenResponse};
-use crate::{client::ClientCreds, endpoints::Endpoint, error::ApiErrorResponse, interface::auth::*, utils::oauth_request_helper, Result};
+use crate::{
+  client::ClientCreds,
+  endpoints::Endpoint,
+  error::{ApiErrorResponse, AuthError},
+  interface::auth::*,
+  utils::oauth_request_helper,
+  Result,
+};
 use std::{fmt::Debug, ops::Deref};
 
 #[derive(Debug, Serialize, Deserialize)]

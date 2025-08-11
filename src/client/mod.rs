@@ -10,8 +10,9 @@ use crate::{
     Lyrics, MediaCredit, MediaItem, MediaRecommendation, Mix, MixId, Page, Paging, PlaybackInfo, PlaybackInfoOptions, Session, Track, User,
     UserClient, UserSubscription,
   },
-  client::auth::{AuthError, DeviceFlowResponse, GrantType, UserFlowInfo},
-  interface::{catalogue::playlist::PlaylistCollection, users::UsersError},
+  client::auth::{DeviceFlowResponse, GrantType, UserFlowInfo},
+  error::{AuthError, UsersError},
+  interface::catalogue::playlist::PlaylistCollection,
   utils, Result,
 };
 use isocountry::CountryCode;
