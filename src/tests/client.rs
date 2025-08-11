@@ -232,7 +232,6 @@ mod my_collection {
     use super::super::EXAMPLE_UNOWNED_PLAYLIST_ID;
     use crate::api::my_collection::{FolderData, ResourceInfo};
     use crate::api::Playlist;
-    use crate::interface::catalogue::playlist::PlaylistCollection;
     use crate::utils::client_from_authfile;
 
     #[test]
