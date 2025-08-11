@@ -49,7 +49,6 @@
 pub mod api;
 pub mod client;
 pub mod endpoints;
-pub mod interface;
 
 pub(crate) mod utils;
 
