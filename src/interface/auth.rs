@@ -3,7 +3,7 @@
 //! This module contains the traits and structs for handling authentication with the Tidal API,
 //! allowing the user to implement as many or as few of the flows as they want
 
-use crate::{api::Session, Result};
+use crate::Result;
 use chrono::Utc;
 
 pub mod flows;
@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 /// Access and manage authenticated credentials
 ///
 /// Defines a client capable of being authenticated, required by other interfaces
+#[deprecated]
 pub trait Auth {
   /// A type which acts as the credentials for the client
   type Credentials: Credentials;
@@ -54,6 +55,7 @@ pub trait Auth {
 ///
 /// Defines a type which can act as credentials for an authenticated client, requires an
 /// implementation of the `RefreshFlow` trait
+#[deprecated]
 pub trait Credentials: RefreshFlow {
   /// Retuns the time at which the credentials expire, formatted as a unix timestamp
   fn expires_at(&self) -> i64;
@@ -61,13 +63,6 @@ pub trait Credentials: RefreshFlow {
   fn country_code(&self) -> Option<&CountryCode>;
   /// Returns the id of the user associated with the credentials, if any
   fn user_id(&self) -> Option<&u64>;
-}
-
-pub trait Sessions: Auth {
-  /// Get a session from the current authentication credentials
-  fn get_session_from_auth(&self) -> Result<Session>;
-  /// Get a session from it's specified id
-  fn get_session(&self, session_id: &str) -> Result<Session>;
 }
 
 /// The type of grant being used for authentication

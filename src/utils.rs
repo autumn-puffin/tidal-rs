@@ -80,8 +80,8 @@ pub fn new_pkce_pair() -> (String, String) {
 pub fn res_to_error(res: reqwest::blocking::Response) -> crate::Error {
   let err: crate::error::ApiErrorResponse = res.json().expect("Failed to parse error response");
   match (err.status, err.sub_status, err.error.as_deref()) {
-    (401, _, _) => crate::client::AuthError::Unauthenticated.into(),
-    (400, Some(1002), Some("authorization_pending")) => crate::client::AuthError::AuthorizationPending.into(),
+    (401, _, _) => crate::interface::auth::AuthError::Unauthenticated.into(),
+    (400, Some(1002), Some("authorization_pending")) => crate::interface::auth::AuthError::AuthorizationPending.into(),
     _ => err.into(),
   }
 }

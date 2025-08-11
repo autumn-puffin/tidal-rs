@@ -10,7 +10,6 @@ const EXAMPLE_VIDEO_ID: u64 = 29484637; // Get Got - The Money Store - Death Gri
 const EXAMPLE_UNOWNED_PLAYLIST_ID: Uuid = Uuid::from_u128(0x395140403d8a40d7b4e46edb48b90a42); // The Prodigy Essentials - Tidal
 
 mod sessions {
-  use crate::interface::{RefreshFlow, Sessions};
 
   #[test]
   fn get_session_from_auth() {
@@ -28,8 +27,6 @@ mod sessions {
 }
 
 mod users {
-  use crate::interface::{RefreshFlow, Users};
-
   #[test]
   fn get_current_user() {
     let mut client = super::client_from_authfile().unwrap();
@@ -52,7 +49,6 @@ mod users {
 
 mod pages {
   use super::{EXAMPLE_ALBUM_ID, EXAMPLE_ARTIST_ID, EXAMPLE_MIX_ID};
-  use crate::interface::{Catalogue, RefreshFlow};
 
   #[test]
   fn get_home_page() {
@@ -88,7 +84,6 @@ mod pages {
 
 mod tracks {
   use super::EXAMPLE_TRACK_ID;
-  use crate::interface::{RefreshFlow, TrackCatalogue};
 
   #[test]
   fn get_track() {
@@ -124,7 +119,6 @@ mod tracks {
 
 mod videos {
   use super::EXAMPLE_VIDEO_ID;
-  use crate::interface::{RefreshFlow, VideoCatalogue};
 
   #[test]
   fn get_video() {
@@ -142,7 +136,6 @@ mod videos {
 
 mod artists {
   use super::EXAMPLE_ARTIST_ID;
-  use crate::interface::{ArtistCatalogue, RefreshFlow};
 
   #[test]
   fn get_artist() {
@@ -184,7 +177,6 @@ mod artists {
 
 mod albums {
   use super::EXAMPLE_ALBUM_ID;
-  use crate::interface::{AlbumCatalogue, RefreshFlow};
 
   #[test]
   fn get_album() {
@@ -214,7 +206,6 @@ mod albums {
 
 mod playlists {
   use super::EXAMPLE_UNOWNED_PLAYLIST_ID;
-  use crate::interface::{PlaylistCatalogue, RefreshFlow};
 
   #[test]
   fn get_playlist() {
@@ -241,7 +232,7 @@ mod my_collection {
     use super::super::EXAMPLE_UNOWNED_PLAYLIST_ID;
     use crate::api::my_collection::{FolderData, ResourceInfo};
     use crate::api::Playlist;
-    use crate::interface::{catalogue::playlist::PlaylistCollection, RefreshFlow};
+    use crate::interface::catalogue::playlist::PlaylistCollection;
     use crate::utils::client_from_authfile;
 
     #[test]
@@ -286,7 +277,6 @@ mod my_collection {
 
 mod mixes {
   use super::EXAMPLE_MIX_ID;
-  use crate::interface::RefreshFlow;
 
   #[test]
   fn get_mix_items() {

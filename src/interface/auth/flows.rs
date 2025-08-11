@@ -4,6 +4,7 @@ use serde::Deserialize;
 /// Authenticate using only client credentials
 ///
 /// Client flow uses only the client credentials to authenticate, offering only basic access
+#[deprecated]
 pub trait ClientFlow {
   /// Establish authentication using only the client credentials
   fn client_login(&mut self) -> Result<()>;
@@ -15,6 +16,7 @@ pub trait ClientFlow {
 /// the application. Once the user has authorized the application, they will be redirected to a
 /// specified redirect URI with a code as a query parameter. This code, along with the PKCE
 /// verifier should be passed to `user_login_finalize()`, which will complete the login process.
+#[deprecated]
 pub trait UserFlow {
   /// Returns a URL and PKCE verifier for the user to authorize the application
   fn user_login_init(&self) -> Result<UserFlowInfo>;
@@ -32,6 +34,7 @@ pub trait UserFlow {
 /// the login process. Since device flow does not require direct user input, it is possible, and
 /// recomended to call `device_login_finalize()` instead, which will automatically poll the server
 /// until either the user has authenticated the application, or the flow has expired.
+#[deprecated]
 pub trait DeviceFlow {
   /// Returns a user code, verification URI, device code, expiry time, and polling interval
   fn device_login_init(&self) -> Result<DeviceFlowResponse>;
@@ -59,6 +62,7 @@ pub trait DeviceFlow {
 /// Refresh credentials when they expire
 ///
 /// Refresh flow is used to refresh credentials when they expire
+#[deprecated]
 pub trait RefreshFlow {
   /// Refresh credentials
   fn refresh(&mut self) -> Result<()>;
