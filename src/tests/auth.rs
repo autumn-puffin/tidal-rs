@@ -1,30 +1,31 @@
-use crate::{
-  client::{auth::AuthClient, ClientCreds},
-  interface::auth::*,
-};
+use crate::client::{Client, ClientCreds};
 use dotenvy_macro::dotenv;
 use reqwest::Url;
 
-fn get_auth() -> AuthClient {
-  let mut auth = AuthClient::new(
-    // Note: Testing requires setting up a .env file in the root of the project (.env is gitignored)
-    ClientCreds::new(dotenv!("ClientID").to_owned(), dotenv!("ClientSecret").to_owned()),
+fn get_fresh_client() -> Client {
+  let env = (
+    dotenv!("ClientID").to_owned(),
+    dotenv!("ClientSecret").to_owned(),
+    dotenv!("RedirectURI").to_owned(),
   );
-  auth.set_redirect_uri(dotenv!("RedirectURI").to_owned());
-  auth
+  println!("Using id: {}\nUsing secret: {}\nUsing redirect uri: {}", env.0, env.1, env.2);
+  let mut client = Client::new(ClientCreds::new(env.0, env.1));
+  client.set_redirect_uri(env.2);
+  client
 }
 
 #[test]
 fn test_client_flow() {
-  let mut auth = get_auth();
-  auth.client_login().unwrap();
+  let mut client = get_fresh_client();
+  client.client_flow_login().unwrap();
 }
 #[test]
-#[ignore]
-// Note: This test requires the use of the --nocapture flag as well as the browser
+#[ignore = "requires the --nocapture flag"]
+/// Note: This test requires the use of the --nocapture flag as well as the browser
+/// `cargo test test_user_flow -- --nocapture --ignored`
 fn test_user_flow() {
-  let mut auth = get_auth();
-  let response = auth.user_login_init().unwrap();
+  let mut client = get_fresh_client();
+  let response = client.user_flow_login_init().unwrap();
   println!("Please Go To {:?}\nPaste the redirected url below after logging in\n", response.url());
   let mut code = String::new();
   std::io::stdin().read_line(&mut code).unwrap();
@@ -35,14 +36,15 @@ fn test_user_flow() {
     .unwrap()
     .1
     .to_string();
-  auth.user_login_finalize(code, response).unwrap();
+  client.user_flow_login_finalize(code, response).unwrap();
 }
 #[test]
-#[ignore]
-// Note: This test requires the use of the --nocapture flag as well as the browser
+#[ignore = "requires the --nocapture flag"]
+/// Note: This test requires the use of the --nocapture flag as well as the browser
+/// `cargo test test_device_flow -- --nocapture --ignored`
 fn test_device_flow() {
-  let mut auth = get_auth();
-  let response = auth.device_login_init().unwrap();
+  let mut client = get_fresh_client();
+  let response = client.device_flow_login_init().unwrap();
   println!("Please Go To https://{}\n", response.verification_uri_complete);
-  auth.device_login_finalize(&response).unwrap();
+  client.device_flow_login_finalize(&response).unwrap();
 }
