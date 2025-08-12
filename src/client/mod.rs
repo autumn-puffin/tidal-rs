@@ -3,14 +3,14 @@
 //! The `Client` struct is a basic all-inclusive blocking client for the Tidal API, there are also
 //! standalone clients for individual parts of the API, such as the `AuthClient`, and the `CatalogueClient`
 
-use std::{collections::HashMap, fmt::Debug, ops::Deref};
+use std::collections::HashMap;
 
 use crate::{
   api::{
-    AuthUser, DeviceFlowResponse, GrantType, Lyrics, MediaCredit, MediaItem, MediaRecommendation, Mix, MixId, Page, Paging, PlaybackInfo,
-    PlaybackInfoOptions, Session, TokenResponse, Track, User, UserClient, UserFlowInfo, UserSubscription,
+    DeviceFlowResponse, GrantType, Lyrics, MediaCredit, MediaItem, MediaRecommendation, Mix, MixId, Page, Paging, PlaybackInfo, PlaybackInfoOptions,
+    Session, TokenResponse, Track, User, UserClient, UserFlowInfo, UserSubscription,
   },
-  error::{ApiErrorResponse, AuthError, UsersError},
+  error::{AuthError, UsersError},
   utils, Result,
 };
 use isocountry::CountryCode;
@@ -18,12 +18,14 @@ use reqwest::{
   blocking::{Client as ReqwestClient, Response},
   header::HeaderMap,
 };
-use serde::{Deserialize, Serialize};
 use tidal_rs_macros::{
   base_url, basic_auth, bearer_auth, body, body_form_url_encoded, client, delete, get, headers, post, put, query, response_handler, shared_query,
 };
 use url::Url;
 use uuid::Uuid;
+
+mod credentials;
+pub use credentials::{AuthCreds, ClientCreds};
 
 /// A client for interacting with the Tidal API, implimenting all of the available interfaces.
 pub struct Client {
@@ -645,159 +647,5 @@ impl Client {
       return self.client_flow_login();
     }
     self.refresh_flow()
-  }
-} 
-/// A simple struct for storing client credentials, with a custom Debug impl that redacts the client secret.
-#[derive(Clone, Serialize, Deserialize)]
-pub struct ClientCreds {
-  client_id: String,
-  client_secret: String,
-}
-impl ClientCreds {
-  /// Create a new `ClientCreds` struct with the given client_id and client_secret
-  pub fn new(client_id: String, client_secret: String) -> Self {
-    Self { client_id, client_secret }
-  }
-  /// Returns the client_id
-  pub fn id(&self) -> &str {
-    &self.client_id
-  }
-  /// Returns the client_secret
-  pub fn secret(&self) -> &str {
-    &self.client_secret
-  }
-  /// Returns the client creds as a tuple of (id, secret)
-  pub fn as_tuple(&self) -> (&str, &str) {
-    (&self.client_id, &self.client_secret)
-  }
-}
-impl std::fmt::Debug for ClientCreds {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("ClientCreds")
-      .field("client_id", &self.client_id)
-      .field("client_secret", &"[REDACTED]")
-      .finish()
-  }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AuthCreds {
-  client_credentials: ClientCreds,
-  grant_type: GrantType,
-
-  access_token: Token,
-  scope: String,
-  expires_in: i64,
-  refresh_token: Option<Token>,
-  user_id: Option<u64>,
-  user: Option<AuthUser>,
-
-  received_at: i64,
-}
-impl AuthCreds {
-  pub fn new(grant_type: GrantType, client_credentials: ClientCreds, response: TokenResponse) -> Self {
-    let TokenResponse {
-      access_token,
-      user_id,
-      user,
-      scope,
-      expires_in,
-      refresh_token,
-    } = response;
-
-    Self {
-      grant_type,
-      client_credentials,
-      access_token: access_token.into(),
-      user_id,
-      user,
-      scope,
-      expires_in,
-      refresh_token: refresh_token.map(Token::from),
-      received_at: chrono::Utc::now().timestamp(),
-    }
-  }
-  pub fn country_code(&self) -> Option<&CountryCode> {
-    Some(&self.user.as_ref()?.country_code)
-  }
-  pub fn expires_at(&self) -> i64 {
-    self.received_at + self.expires_in
-  }
-  pub fn access_token(&self) -> &str {
-    &self.access_token
-  }
-  pub fn refresh_token(&self) -> Result<&str> {
-    self.refresh_token.as_deref().ok_or(AuthError::MissingRefreshToken.into())
-  }
-  pub fn user_id(&self) -> Option<&u64> {
-    self.user_id.as_ref()
-  }
-  pub fn auth_user(&self) -> Option<&AuthUser> {
-    self.user.as_ref()
-  }
-  pub fn grant_type(&self) -> &GrantType {
-    &self.grant_type
-  }
-  pub fn client_credentials(&self) -> &ClientCreds {
-    &self.client_credentials
-  }
-  pub fn scope(&self) -> &str {
-    &self.scope
-  }
-
-  pub fn client_login_with_http_client(&mut self, http_client: &ReqwestClient) -> Result<()> {
-    let endpoint = crate::endpoints::Endpoint::OAuth2Token;
-    let grant = GrantType::ClientCredentials;
-
-    let res = utils::oauth_request_helper(http_client, endpoint, grant, self.client_credentials(), None).send()?;
-
-    *self = AuthCreds::new(grant, self.client_credentials().clone(), res.json::<TokenResponse>()?);
-    Ok(())
-  }
-  pub fn refresh_with_http_client(&mut self, client: &ReqwestClient) -> Result<()> {
-    if self.grant_type == GrantType::ClientCredentials {
-      return self.client_login_with_http_client(client);
-    }
-    let endpoint = crate::endpoints::Endpoint::OAuth2Token;
-    let grant = GrantType::RefreshToken;
-    let client_credentials = self.client_credentials();
-    let refresh_token = self.refresh_token()?;
-
-    let params = &[("refresh_token", refresh_token)];
-
-    let res = utils::oauth_request_helper(client, endpoint, grant, client_credentials, Some(params)).send()?;
-    if res.status().is_success() {
-      *self = AuthCreds::new(GrantType::RefreshToken, client_credentials.clone(), res.json::<TokenResponse>()?);
-    } else {
-      return Err(res.json::<ApiErrorResponse>()?.into());
-    }
-    Ok(())
-  }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Token(pub String);
-impl Token {
-  pub fn new(token: String) -> Self {
-    Self(token)
-  }
-  pub fn as_str(&self) -> &str {
-    &self.0
-  }
-}
-impl From<String> for Token {
-  fn from(token: String) -> Self {
-    Self(token)
-  }
-}
-impl Debug for Token {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_tuple("Token").field(&"[REDACTED]").finish()
-  }
-}
-impl Deref for Token {
-  type Target = str;
-  fn deref(&self) -> &Self::Target {
-    &self.0
   }
 }
