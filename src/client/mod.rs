@@ -3,6 +3,7 @@
 //! The `Client` struct is a basic all-inclusive blocking client for the Tidal API, there are also
 //! standalone clients for individual parts of the API, such as the `AuthClient`, and the `CatalogueClient`
 
+#![warn(missing_docs)]
 use std::collections::HashMap;
 
 use crate::{
@@ -69,9 +70,11 @@ impl Client {
   pub fn get_client_credentials(&self) -> &ClientCreds {
     &self.client_credentials
   }
+  /// Get the client's associated client id
   pub fn get_client_id(&self) -> &str {
     self.client_credentials.id()
   }
+  /// Get the client's associated client secret
   pub fn get_client_secret(&self) -> &str {
     self.client_credentials.secret()
   }
@@ -214,20 +217,25 @@ impl Client {
   /// Get a given page under the `/pages` endpoint
   #[get(format!("/pages/{page}"))]
   pub fn get_page(&self, page: &str) -> Result<Page> {}
+  /// Get the home page
   pub fn get_home_page(&self) -> Result<Page> {
     self.get_page("home")
   }
+  /// Get the explore page
   pub fn get_explore_page(&self) -> Result<Page> {
     self.get_page("explore")
   }
+  /// Get a mix page by its id
   pub fn get_mix_page(&self, mix_id: &str) -> Result<Page> {
     let path = format!("mix?mixId={}", mix_id);
     self.get_page(path.as_str())
   }
+  /// Get an artist page by its id
   pub fn get_artist_page(&self, artist_id: &u64) -> Result<Page> {
     let path = format!("artist?artistId={}", artist_id);
     self.get_page(path.as_str())
   }
+  /// Get an album page by its id
   pub fn get_album_page(&self, album_id: &u64) -> Result<Page> {
     let path = format!("album?albumId={}", album_id);
     self.get_page(path.as_str())
@@ -381,6 +389,7 @@ impl Client {
 #[shared_query(&self.shared_query())]
 #[response_handler(|res| {Ok(res)})]
 impl Client {
+  /// Add a playlist to the user's favorites collection, optionally specifying a parent folder
   #[put("/my-collection/playlists/folders/add-favorites")]
   #[query(&[
     ("folderId", parent_folder_id.map_or("root".to_owned(), |uuid| {uuid.to_string()})),
@@ -388,6 +397,7 @@ impl Client {
   ])]
   pub fn add_favorite_playlist(&self, parent_folder_id: Option<&Uuid>, playlist_id: &Uuid) -> Result<Response> {}
 
+  /// Create a new playlist in the user's collection, optionally specifying a parent folder
   #[put("/my-collection/playlists/folders/create-playlist")]
   #[query(&[
     ("name", name),
@@ -397,10 +407,12 @@ impl Client {
   ])]
   pub fn create_playlist(&self, parent_folder_id: Option<&Uuid>, name: &str, description: &str, is_public: bool) -> Result<Response> {}
 
+  /// Remove a playlist from the user's collection
   #[put("/my-collection/playlists/folders/remove")]
   #[query(&[("trns", format!("trn:playlist:{playlist_id}"))])]
   pub fn remove_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
 
+  /// Move a playlist to a different folder, or to the root if no folder is specified
   #[put("/my-collection/playlists/folders/move")]
   #[query(&[
     ("folderId", parent_folder_id.map_or("root".to_owned(), |uuid| {uuid.to_string()})),
@@ -408,6 +420,7 @@ impl Client {
   ])]
   pub fn move_playlist(&self, parent_folder_id: Option<&Uuid>, playlist_id: &Uuid) -> Result<Response> {}
 
+  /// Edit a playlist's name and description
   #[put("/my-collection/playlists/folders/rename")]
   #[query(&[
     ("name", name),
@@ -416,16 +429,20 @@ impl Client {
   ])]
   pub fn edit_playlist(&self, playlist_id: &Uuid, name: &str, description: &str) -> Result<Response> {}
 
+  /// Publish a playlist, making it public
   #[put(format!("/playlists/{playlist_id}/set-public"))]
   pub fn publish_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
 
+  /// Unpublish a playlist, making it private
   #[put(format!("/playlists/{playlist_id}/set-private"))]
   pub fn unpublish_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
 
+  /// Get a playlist in the user's collection
   #[put("/my-collection/playlists/folders/items")]
   #[query(&[("trns", format!("trn:playlist:{playlist_id}"))])]
   pub fn get_collection_playlist(&self, playlist_id: &Uuid) -> Result<Response> {}
 
+  /// Create a new folder in the user's collection, optionally specifying a parent folder
   #[put("/my-collection/playlists/folders/create-folder")]
   #[query(&[
     ("name", name),
@@ -434,14 +451,17 @@ impl Client {
   ])]
   pub fn create_folder(&self, parent_folder_id: Option<&Uuid>, name: &str, _trns: Option<&str>) -> Result<Response> {}
 
+  /// Remove a folder from the user's collection
   #[put("/my-collection/playlists/folders/remove")]
   #[query(&[("trns", format!("trn:folder:{folder_id}"))])]
   pub fn remove_folder(&self, folder_id: &Uuid) -> Result<Response> {}
 
+  /// Get the items in a folder, or the root if no folder is specified
   #[get("/my-collection/playlists/folders")]
   #[query(&[("folderId", folder_id.map_or("root".to_owned(), |uuid| {uuid.to_string()}))])]
   pub fn get_folder_items(&self, folder_id: Option<&Uuid>) -> Result<Response> {}
 
+  /// Move a folder to a different parent folder, or to the root if no parent folder is specified
   #[put("/my-collection/playlists/folders/move")]
   #[query(&[
     ("folderId", parent_folder_id.map_or("root".to_owned(), |uuid| {uuid.to_string()})),
@@ -449,6 +469,7 @@ impl Client {
   ])]
   pub fn move_folder(&self, parent_folder_id: Option<&Uuid>, folder_id: &Uuid) -> Result<Response> {}
 
+  /// Rename a folder in the user's collection
   #[put("/my-collection/playlists/folders/rename")]
   #[query(&[
     ("name", name),
