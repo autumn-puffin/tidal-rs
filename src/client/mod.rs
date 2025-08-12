@@ -613,16 +613,40 @@ impl Client {
   }
 
   // Refresh Flow //
-  /// Refreshes the current credentials
-  pub fn refresh(&mut self) -> Result<()> {
-    self
-      .auth_credentials
-      .as_mut()
-      .ok_or(AuthError::Unauthenticated)?
-      .refresh_with_http_client(&self.http_client)
-  }
-}
+  /// Forcefully refreshes the current credentials using the refresh token, if available
+  ///
+  /// You likely want to use `refresh()` instead, which will only refresh if the credentials are
+  /// expired and also allows refreshing of a client credentials grant, which does not use a refresh token
+  #[post("/oauth2/token")]
+  #[body_form_url_encoded]
+  #[body(&[("grant_type", GrantType::RefreshToken.as_str())])]
+  #[response_handler(|res: Response| {
+    if !res.status().is_success() {
+      return Err(utils::res_to_error(res));
+    }
+    let auth_creds = AuthCreds::new(GrantType::RefreshToken, self.client_credentials.clone(), res.json::<TokenResponse>()?);
+    let country = auth_creds.auth_user().map(|user| user.country_code);
 
+    self.auth_credentials = Some(auth_creds);
+    self.country = country;
+    Ok(())
+  })]
+  pub fn refresh_flow(&mut self) -> Result<()> {}
+
+  /// Refreshes the current credentials if needed
+  pub fn refresh(&mut self) -> Result<()> {
+    let Some(auth_creds) = self.auth_credentials.as_ref() else {
+      return Err(AuthError::Unauthenticated.into());
+    };
+    if !auth_creds.is_expired() {
+      return Ok(());
+    }
+    if *auth_creds.grant_type() == GrantType::ClientCredentials {
+      return self.client_flow_login();
+    }
+    self.refresh_flow()
+  }
+} 
 /// A simple struct for storing client credentials, with a custom Debug impl that redacts the client secret.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ClientCreds {
