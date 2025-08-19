@@ -1,7 +1,4 @@
-//! TIDAL-rs' main client implementation for the Tidal API, implimenting all of the available interfaces.
-//!
-//! The `Client` struct is a basic all-inclusive blocking client for the Tidal API, there are also
-//! standalone clients for individual parts of the API, such as the `AuthClient`, and the `CatalogueClient`
+//! TIDAL-rs' client module
 
 #![warn(missing_docs)]
 use std::collections::HashMap;
@@ -171,6 +168,13 @@ impl Client {
 #[base_url("https://api.tidal.com/v1")]
 #[bearer_auth(self.bearer_auth().unwrap_or_default())]
 #[shared_query(&self.shared_query())]
+#[response_handler(|res: Response| {
+  if !res.status().is_success() {
+    return Err(utils::res_to_error(res));
+  }
+  let ret: __Return = Ok(res.json()?);
+  ret
+})]
 impl Client {
   /// Get a session from the current authentication credentials
   #[get("/sessions")]
@@ -642,7 +646,10 @@ impl Client {
   /// expired and also allows refreshing of a client credentials grant, which does not use a refresh token
   #[post("/oauth2/token")]
   #[body_form_url_encoded]
-  #[body(&[("grant_type", GrantType::RefreshToken.as_str())])]
+  #[body(&[
+    ("grant_type", GrantType::RefreshToken.as_str()),
+    ("refresh_token", self.get_auth_credentials()?.refresh_token()?)
+  ])]
   #[response_handler(|res: Response| {
     if !res.status().is_success() {
       return Err(utils::res_to_error(res));
