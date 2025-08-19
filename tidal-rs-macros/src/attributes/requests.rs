@@ -76,7 +76,7 @@ impl RequestFunction {
         response_handler.into_token_stream()
       } else {
         quote::quote! { |res: Response| {
-          let ret: #return_type = Ok(res.json()?);
+          let ret: __Return = Ok(res.json()?);
           ret
         } }
       }
@@ -85,6 +85,7 @@ impl RequestFunction {
     call = quote::quote! { #call.send()? };
     let block = quote::quote! {
       {
+        type __Return = #return_type;
         #init
         let res: Response = #call;
         let mut response_handler = #response_handler;
